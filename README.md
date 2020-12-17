@@ -4,11 +4,13 @@ Discard is a Python tool for medium-scale Discord server archival operations.
 
 I don't know who needs to hear this, but I'll give a brief history lesson.  We used to own our data, now everything's in the cloud.  It used to be that chat clients had a valuable feature called *logging*.  Every message that you sent or received would be forever etched into a file on your disk, free to browse offline and search through in the future.  It's no longer like that.  We're supposed to appreciate the fulltext, fuzzy search we get from Discord, but something is lost.  The chat history is locked in this silo with no download option.  People can even delete their messages in front of your eyes—or while you're not looking!  This is not reasonable.  You deserve to trust your memory.
 
-At [Archive Team](https://archiveteam.org/), we're working tirelessly to preserve websites at risk.  With this project I'm turning my attention to archiving Discord servers.  This is important because **our history matters**.  Closed services like Discord and Telegram have gone on to displace traditional services like message boards and even fansites.  Want to download my fan game?  Why don't you join my Discord?  The invite link is public, and once you join, all history is there for you to read.  Yet you can't **discover** content from the server by search.  Private, or public?  Discord's status is *deep web*, as chats are unable to be indexed by conventional search engines and archival tools, even if invites are posted publicly.
+At [Archive Team](https://archiveteam.org/), we're working tirelessly to preserve websites at risk.  With this project I'm turning my attention to archiving Discord servers.  This is important because **our history matters**.  Closed services like Discord and Telegram have gone on to displace traditional services like message boards and even what used to be homepages.  Want to download my fan game?  Why don't you join my Discord?  The invite link is public, and once you join, all history is there for you to read.  Yet you can't **discover** content from the server by search.  Private, or public?  Discord's status is *deep web*, as chats are unable to be indexed by conventional search engines and archival tools, even if invites are posted publicly.
 
 I'm taking a stance: if a Discord server has a public invite, you have the right to archive it.  Let's make that happen.
 
 ## Usage
+
+The program needs a **Discord token** to operate.  It's compatible with both bot and user tokens.  Please check out [this guide](https://github.com/Tyrrrz/DiscordChatExporter/wiki/Obtaining-Token-and-Channel-IDs) on obtaining tokens.  The token can be provided on the command line with the `-t` parameter, or it can be read from a `DISCORD_TOKEN` enviromental variable.
 
 ```
     $ python -m discard profile
@@ -60,12 +62,13 @@ The `run.meta.json` file contains metadata about the run:
 
 It is written when the archival starts and again when it finishes correctly or when it terminates in case of an error.  In particular, note the exact version of the client as well as the command used for the backup run.
 
-The "non-meta" files contain lists of requests as in the following example:
+The "non-meta" files contain lists of HTTP requests and websocket exchanges as in the following example:
 ```json
 [
     {
+        "type": "http",
+        "datetime": "2020-12-15T13:10:19",
         "request": {
-            "datetime": "2020-12-15T13:10:19",
             "method": "GET",
             "url": "/api/v8/channels/716047609776832626/messages"
         },
@@ -73,6 +76,12 @@ The "non-meta" files contain lists of requests as in the following example:
             "json": {...}
         }
     },
+    {
+        "type": "ws",
+        "datetime": "2020-12-15T13:10:19",
+        "response": {
+            "json": {...}
+        }
     ...
 ]
 ```
@@ -102,7 +111,7 @@ In particular, I hope to address these issues with DiscordChatExporter which hav
 * Users in a Discord server are not downloaded ([#104](https://github.com/Tyrrrz/DiscordChatExporter/issues/104))
 * Authors of reactions are not fetched ([#133](https://github.com/Tyrrrz/DiscordChatExporter/issues/133))
 
-Again, none of this is to flak DiscordChatExporter, the two tools simply have different goals.
+Again, none of this is to flak DiscordChatExporter, the two projects simply have different goals.
 
 ## Disclaimer
 
