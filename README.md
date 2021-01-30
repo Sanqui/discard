@@ -30,10 +30,10 @@ Discard is designed to run daily incremental backups.  The feasibility of a real
 Discard outputs JSON files with the following directory structure:
 
 ```
-    <run datetime>
+    <run datetime>/
     |___run.meta.json
     |___run.json
-    |___<guild_id>
+    |___<guild_id>/
         |___guild.meta.json
         |___guild.json
         |___<channel_id>.meta.json
@@ -102,7 +102,7 @@ Typically the following requests are made:
 
 [DiscordChatExporter](https://github.com/Tyrrrz/DiscordChatExporter) is an excellent tool for end users.  If you're a single person who wants to make a few backups, please, **go ahead and use it**.  It has a straightforward GUI and multiple formatting options, particularly HTML, which allows for exporting chat logs that are easy to browse.  I've even made a brief contribution myself.
 
-What does Discard do differently?  Discard is a more advanced archival tool.  Its goal is to **record Discord API responses** with minimal data processing.  This allows for certainty that no data is missed, even for exotic types of content, or in case Discord changes its API.  The data can then further be processed by other tools.
+What does Discard do differently?  Discard is a more advanced archival tool.  Its goal is to **record Discord API responses** with minimal data processing.  This allows for certainty that no data is missed, even for exotic types of content, or in case Discord changes its API.  The data can then further be derived by other tools.
 
 In particular, I hope to address these issues with DiscordChatExporter which have been marked as out of scope:
 
