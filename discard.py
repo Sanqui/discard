@@ -57,9 +57,21 @@ class DiscardClient(discord.Client):
             print(f"Got channel: {channel}")
 
             self.discard.start_channel(channel)
+
+            num_messages = 0
+            newest_message = None
+            oldest_message = None
             
             async for message in channel.history(limit=None):
-                pass
+                if newest_message == None:
+                    newest_message = message
+                # TODO capture reactions
+
+                num_messages += 1
+                
+            oldest_message = message
+
+            self.discard.end_channel(channel, num_messages, oldest_message, newest_message)
         else:
             raise ValueError(f"Unknown mode: {self.discard.mode}")
 
@@ -73,8 +85,8 @@ class DiscardClient(discord.Client):
         self.discard.log_ws_recv(msg)
     
     async def on_error(self, event_method, *args, **kwargs):
-        # reraising the exception doesn't close the connection, so
-        # we save it and raise it outside.
+        # Reraising the exception doesn't close the connection,
+        # so we save it and raise it outside.
         self.exception = sys.exc_info()
         await self.close()
 
@@ -163,6 +175,36 @@ class Discard():
         guild_id = channel.guild.id
         os.mkdir(self.output_directory + str(guild_id))
         self.request_file = open(self.output_directory + f'{guild_id}/{channel.id}.jsonl', 'w')
+    
+    def end_channel(self, channel, num_messages, oldest_message, newest_message):
+        # This information is intentionally minimalistic. It's supposed to be
+        # a human-readable summary, not a resource. Logged requests contain all data.
+        obj = {
+            'channel': {
+                'id': channel.id,
+                'name': channel.name,
+                'type': str(channel.type)
+            },
+            'run': {
+                'num_messages': num_messages,
+                'oldest_message': None,
+                'newest_message': None
+            }
+        }
+
+        if oldest_message is not None:
+            obj['run']['oldest_message'] = {
+                'id': oldest_message.id,
+                'timestamp': oldest_message.created_at.isoformat() # TODO these need to be converted to UTC!
+            }
+        if newest_message is not None:
+            obj['run']['newest_message'] = {
+                'id': newest_message.id,
+                'timestamp': newest_message.created_at.isoformat()
+            }
+
+        with open(self.output_directory + f'{channel.guild.id}/{channel.id}.meta.json', 'w') as f:
+            json.dump(obj, f, indent=4, ensure_ascii=False)
     
     def log_http_request(self, route, kwargs, response, datetime_start, datetime_end):
         obj = {
