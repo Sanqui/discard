@@ -32,7 +32,7 @@ class DiscardClient(discord.Client):
 
             datetime_end = datetime.datetime.now(datetime.timezone.utc)
 
-            discard.log_http_request(route, response, datetime_start, datetime_end)
+            discard.log_http_request(route, kwargs, response, datetime_start, datetime_end)
 
             return response
         
@@ -55,6 +55,11 @@ class DiscardClient(discord.Client):
             channel = self.get_channel(self.discard.channel_id)
 
             print(f"Got channel: {channel}")
+
+            self.discard.start_channel(channel)
+            
+            async for message in channel.history(limit=None):
+                pass
         else:
             raise ValueError(f"Unknown mode: {self.discard.mode}")
 
@@ -91,7 +96,8 @@ class Discard():
         self.errors = False
         self.exception = None
         self.traceback = None
-        self.num_requests = 0
+        self.num_http_requests = 0
+        self.num_ws_packets = 0
 
         self.output_directory = f'out/{self.datetime_start}/'
         os.mkdir(self.output_directory)
@@ -144,49 +150,65 @@ class Discard():
             'errors': self.errors,
             'exception': self.exception,
             'traceback': self.traceback,
-            'num_requests': self.num_requests
+            'num_http_requests': self.num_http_requests,
+            'num_ws_packets': self.num_ws_packets
         }
 
         with open(self.output_directory + 'run.meta.json', 'w') as f:
-            json.dump(obj, f, indent=4)
+            json.dump(obj, f, indent=4, ensure_ascii=False)
     
-    def log_http_request(self, route, response, datetime_start, datetime_end):
+    def start_channel(self, channel):
+        self.request_file.close()
+
+        guild_id = channel.guild.id
+        os.mkdir(self.output_directory + str(guild_id))
+        self.request_file = open(self.output_directory + f'{guild_id}/{channel.id}.jsonl', 'w')
+    
+    def log_http_request(self, route, kwargs, response, datetime_start, datetime_end):
         obj = {
             'type': 'http',
             'datetime_start': datetime_start.isoformat(),
             'datetime_end': datetime_end.isoformat(),
             'request': {
                 'method': route.method,
-                'url': route.url
+                'url': route.url,
             },
             'response': {
                 'data': response
             }
         }
-        json.dump(obj, self.request_file)
+        if 'params' in kwargs:
+            obj['request']['params'] = kwargs['params']
+        json.dump(obj, self.request_file, ensure_ascii=False)
         self.request_file.write('\n')
-        self.num_requests += 1
+        self.num_http_requests += 1
     
     def log_ws_send(self, data):
+        now = datetime.datetime.now()
         obj = {
             'type': 'ws',
+            'datetime': now.isoformat(),
             'direction': 'send',
-            'data': data
+            'data': data,
         }
         if not self.no_scrub and self.token in data:
             obj['data'] = data.replace(self.token, '[SCRUBBED]')
             obj['scrubbed'] = True
-        json.dump(obj, self.request_file)
+        json.dump(obj, self.request_file, ensure_ascii=False)
         self.request_file.write('\n')
+        self.num_ws_packets += 1
 
     def log_ws_recv(self, data):
+        now = datetime.datetime.now()
         obj = {
             'type': 'ws',
+            'datetime': now.isoformat(),
             'direction': 'recv',
             'data': data
         }
-        json.dump(obj, self.request_file)
+        json.dump(obj, self.request_file, ensure_ascii=False)
         self.request_file.write('\n')
+        self.num_ws_packets += 1
 
 @click.group()
 @click.option('-t', '--token', required=True, help='Bot or user token.',
@@ -209,10 +231,10 @@ def profile(ctx, ):
     discard.run()
 
 @cli.command(help="Archive a single channel.")
-@click.option('-c', '--channel', required=True, help='Channel ID.', type=int) # TODO multiple
+@click.argument('channel_id', required=True, type=int)
 @click.pass_context
-def channel(ctx, channel):
-    discard = Discard(mode="channel", channel_id=channel, **ctx.obj)
+def channel(ctx, channel_id):
+    discard = Discard(mode="channel", channel_id=channel_id, **ctx.obj)
     discard.run()
 
 if __name__ == '__main__':
