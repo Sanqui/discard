@@ -42,7 +42,7 @@ class DiscardClient(discord.Client):
         if self.discard.mode == 'profile':
             print(f'We have logged in as {self.user.name} (id {self.user.id})')
 
-            if self.is_user_account:
+            if not self.is_user_account:
                 # Fetch self using the HTTP API (not supported for user accounts)
                 user = await self.fetch_user(self.user.id)
                 print(f"Fetched user: {user}")
@@ -52,7 +52,9 @@ class DiscardClient(discord.Client):
                 print(f"Fetched profile: {profile}")
 
         elif self.discard.mode == 'channel':
-            pass
+            channel = self.get_channel(self.discard.channel_id)
+
+            print(f"Got channel: {channel}")
         else:
             raise ValueError(f"Unknown mode: {self.discard.mode}")
 
@@ -73,12 +75,13 @@ class DiscardClient(discord.Client):
 
 
 class Discard():
-    def __init__(self, token, mode, command=None, channel=None, is_user_account=False):
+    def __init__(self, token, mode, command=None, channel_id=None, is_user_account=False, no_scrub=False):
         self.token = token
         self.mode = mode
         self.command = command
-        self.channel = channel
+        self.channel_id = channel_id
         self.is_user_account = is_user_account
+        self.no_scrub = no_scrub
 
     def start(self):
         self.datetime_start = datetime.datetime.now(datetime.timezone.utc)
@@ -170,6 +173,9 @@ class Discard():
             'direction': 'send',
             'data': data
         }
+        if not self.no_scrub and self.token in data:
+            obj['data'] = data.replace(self.token, '[SCRUBBED]')
+            obj['scrubbed'] = True
         json.dump(obj, self.request_file)
         self.request_file.write('\n')
 
@@ -185,28 +191,28 @@ class Discard():
 @click.group()
 @click.option('-t', '--token', required=True, help='Bot or user token.',
             envvar='DISCORD_TOKEN')
-@click.option('-U', '--is-user-account', default=False, is_flag=True, help='Whether to log in as a user account.')
+@click.option('-U', '--is-user-account', default=False, is_flag=True, help='Log in as a user account.')
+@click.option('--no-scrub', default=False, is_flag=True, help='Do not scrub token from logged data.')
 @click.pass_context
-def cli(ctx, token, is_user_account):
+def cli(ctx, token, is_user_account, no_scrub):
     ctx.ensure_object(dict)
 
-    ctx.obj['TOKEN'] = token
-    ctx.obj['IS_USER_ACOCUNT'] = is_user_account
-    ctx.obj['COMMAND'] = sys.argv
+    ctx.obj['token'] = token
+    ctx.obj['is_user_account'] = is_user_account
+    ctx.obj['no_scrub'] = no_scrub
+    ctx.obj['command'] = sys.argv
 
 @cli.command(help="Only log in and fetch profile information.")
 @click.pass_context
 def profile(ctx, ):
-    discard = Discard(token=ctx.obj['TOKEN'], is_user_account=ctx.obj['IS_USER_ACOCUNT'], command=ctx.obj['COMMAND'],
-                        mode="profile")
+    discard = Discard(mode="profile", **ctx.obj)
     discard.run()
 
 @cli.command(help="Archive a single channel.")
 @click.option('-c', '--channel', required=True, help='Channel ID.', type=int) # TODO multiple
 @click.pass_context
 def channel(ctx, channel):
-    discard = Discard(token=ctx.obj['TOKEN'], is_user_account=ctx.obj['IS_USER_ACOCUNT'], command=ctx.obj['COMMAND'],
-                        mode="channel", channel=channel)
+    discard = Discard(mode="channel", channel_id=channel, **ctx.obj)
     discard.run()
 
 if __name__ == '__main__':
