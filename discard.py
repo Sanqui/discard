@@ -1,6 +1,7 @@
 import os
 import logging
 import datetime
+import datetime
 import json
 import traceback
 import copy
@@ -9,65 +10,30 @@ import click
 import discord
 import vcr
 
-
 #logging.basicConfig(level=logging.DEBUG)
-class StreamingCassette(vcr.cassette.Cassette):
-    '''
-        Subclass of the VCR Cassette which streams output instead
-        of writing it all at once, and supports swapping output files
-        at runtime.
-
-        VCR was not exactly built for this, but we can make it happen.
-    '''
-    pass
-    def __init__(self, path, filename, **kwargs):
-        super().__init__(None, **kwargs)
-        self.path = path
-        self.file = None
-        self.num_requests = 0
-
-        self.switch_file(filename)
-    
-    def switch_file(self, filename):
-        if self.file != None:
-            self.file.close()
-
-        self.file = open(self.path + filename, 'w')
-        self.dirty = False
-        self.rewound = True
-    
-    def append(self, request, response):
-        """Add a request, response pair to this cassette"""
-        request = self._before_record_request(request)
-        if not request:
-            return
-        response = copy.deepcopy(response)
-        response = self._before_record_response(response)
-        if response is None:
-            return
-        
-        if response["body"]["string"] is not None and isinstance(response["body"]["string"], bytes):
-            response["body"]["string"] = response["body"]["string"].decode("utf-8")
-        obj = {'request': request._to_dict(), 'response': response}
-        json.dump(obj, self.file)
-        self.file.write("\n")
-        self.num_requests += 1
-        self.dirty = True
-
-    def _load(self):
-        pass
-
-    def _save(self, force=False):
-        if self.file != None:
-            self.file.close()
-
 
 class DiscardClient(discord.Client):
-    def __init__(self, *args, discard_logger=None, cassette=None, **kwargs):
+    def __init__(self, *args, discard=None, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.discard_logger = discard_logger
-        self.cassette = cassette
+        self.discard = discard
+
+        # monkeypatch discord.py request function to log
+
+        request_func = self.http.request
+
+        async def request_func_wrapped(route, *, files=None, **kwargs):
+            datetime_start = datetime.datetime.now(datetime.timezone.utc)
+
+            response = await request_func(route, files=files, **kwargs) # XXX await?
+
+            datetime_end = datetime.datetime.now(datetime.timezone.utc)
+
+            discard.log_request(route, response, datetime_start, datetime_end)
+
+            return response
+        
+        self.http.request = request_func_wrapped
 
     async def on_ready(self):
         print(f'We have logged in as {self.user.name} (id {self.user.id})')
@@ -91,23 +57,27 @@ class Discard():
         self.token = token
 
     def start(self):
-        self.datetime_start = datetime.datetime.now()
+        self.datetime_start = datetime.datetime.now(datetime.timezone.utc)
         self.datetime_end = None
         self.finished = False
         self.completed = False
         self.errors = False
         self.exception = None
         self.traceback = None
-        self.requests = 0
+        self.num_requests = 0
 
         self.output_directory = f'out/{self.datetime_start}/'
         os.mkdir(self.output_directory)
 
         self.write_meta_file()
+
+        self.request_file = open(self.output_directory + 'meta.jsonl', 'w')
     
     def end(self):
+        self.request_file.close()
+
         self.finished = True
-        self.datetime_end = datetime.datetime.now()
+        self.datetime_end = datetime.datetime.now(datetime.timezone.utc)
 
         self.write_meta_file()
 
@@ -115,9 +85,8 @@ class Discard():
         self.start()
 
         try:
-            with StreamingCassette.use(path=self.output_directory, filename='meta.jsonl', record_mode='all') as cassette:
-                self.client = DiscardClient(discard_logger=self, cassette=cassette)
-                self.client.run(self.token)
+            self.client = DiscardClient(discard=self)
+            self.client.run(self.token)
         except Exception as ex:
             self.errors = True
             self.exception = type(ex).__name__ + f"({ex})"
@@ -142,11 +111,28 @@ class Discard():
             'errors': self.errors,
             'exception': self.exception,
             'traceback': self.traceback,
-            'requests': self.requests
+            'num_requests': self.num_requests
         }
 
         with open(self.output_directory + 'run.meta.json', 'w') as f:
             json.dump(obj, f, indent=4)
+    
+    def log_request(self, route, response, datetime_start, datetime_end):
+        obj = {
+            'type': 'http',
+            'datetime_start': datetime_start.isoformat(),
+            'datetime_end': datetime_end.isoformat(),
+            'request': {
+                'method': route.method,
+                'url': route.url
+            },
+            'response': {
+                'data': response
+            }
+        }
+        json.dump(obj, self.request_file)
+        self.request_file.write('\n')
+        self.num_requests += 1
 
 
 @click.command()
