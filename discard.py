@@ -29,7 +29,7 @@ class DiscardClient(discord.Client):
 
             datetime_end = datetime.datetime.now(datetime.timezone.utc)
 
-            discard.log_request(route, response, datetime_start, datetime_end)
+            discard.log_http_request(route, response, datetime_start, datetime_end)
 
             return response
         
@@ -46,10 +46,10 @@ class DiscardClient(discord.Client):
         await self.close()
 
     async def on_socket_raw_send(self, payload):
-        print(">>>", payload)
+        self.discard.log_ws_send(payload)
 
     async def on_socket_response(self, msg):
-        print("<<<", msg)
+        self.discard.log_ws_recv(msg)
 
 
 class Discard():
@@ -117,7 +117,7 @@ class Discard():
         with open(self.output_directory + 'run.meta.json', 'w') as f:
             json.dump(obj, f, indent=4)
     
-    def log_request(self, route, response, datetime_start, datetime_end):
+    def log_http_request(self, route, response, datetime_start, datetime_end):
         obj = {
             'type': 'http',
             'datetime_start': datetime_start.isoformat(),
@@ -133,6 +133,24 @@ class Discard():
         json.dump(obj, self.request_file)
         self.request_file.write('\n')
         self.num_requests += 1
+    
+    def log_ws_send(self, data):
+        obj = {
+            'type': 'ws',
+            'direction': 'send',
+            'data': data
+        }
+        json.dump(obj, self.request_file)
+        self.request_file.write('\n')
+
+    def log_ws_recv(self, data):
+        obj = {
+            'type': 'ws',
+            'direction': 'recv',
+            'data': data
+        }
+        json.dump(obj, self.request_file)
+        self.request_file.write('\n')
 
 
 @click.command()
