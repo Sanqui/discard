@@ -1,3 +1,4 @@
+import sys
 import os
 import logging
 import datetime
@@ -17,6 +18,8 @@ class DiscardClient(discord.Client):
         super().__init__(*args, **kwargs)
 
         self.discard = discard
+        self.is_user_account = self.discard.is_user_account
+        self.exception = None
 
         # monkeypatch discord.py request function to log
 
@@ -36,11 +39,22 @@ class DiscardClient(discord.Client):
         self.http.request = request_func_wrapped
 
     async def on_ready(self):
-        print(f'We have logged in as {self.user.name} (id {self.user.id})')
+        if self.discard.mode == 'profile':
+            print(f'We have logged in as {self.user.name} (id {self.user.id})')
 
-        # Fetch self using a the HTTP API
-        user = await self.fetch_user(self.user.id)
-        print(f"Fetched user: {user}")
+            if self.is_user_account:
+                # Fetch self using the HTTP API (not supported for user accounts)
+                user = await self.fetch_user(self.user.id)
+                print(f"Fetched user: {user}")
+            else:
+                # Fetch own profile using the HTTP API (not supported for bot accounts)
+                profile = await self.fetch_user_profile(self.user.id)
+                print(f"Fetched profile: {profile}")
+
+        elif self.discard.mode == 'channel':
+            pass
+        else:
+            raise ValueError(f"Unknown mode: {self.discard.mode}")
 
         # Quit
         await self.close()
@@ -50,11 +64,21 @@ class DiscardClient(discord.Client):
 
     async def on_socket_response(self, msg):
         self.discard.log_ws_recv(msg)
+    
+    async def on_error(self, event_method, *args, **kwargs):
+        # reraising the exception doesn't close the connection, so
+        # we save it and raise it outside.
+        self.exception = sys.exc_info()
+        await self.close()
 
 
 class Discard():
-    def __init__(self, token):
+    def __init__(self, token, mode, command=None, channel=None, is_user_account=False):
         self.token = token
+        self.mode = mode
+        self.command = command
+        self.channel = channel
+        self.is_user_account = is_user_account
 
     def start(self):
         self.datetime_start = datetime.datetime.now(datetime.timezone.utc)
@@ -71,7 +95,7 @@ class Discard():
 
         self.write_meta_file()
 
-        self.request_file = open(self.output_directory + 'meta.jsonl', 'w')
+        self.request_file = open(self.output_directory + 'run.jsonl', 'w')
     
     def end(self):
         self.request_file.close()
@@ -86,7 +110,10 @@ class Discard():
 
         try:
             self.client = DiscardClient(discard=self)
-            self.client.run(self.token)
+            self.client.run(self.token, bot=not self.is_user_account)
+            if self.client.exception:
+                t, v, tb = self.client.exception
+                raise v.with_traceback(tb)
         except Exception as ex:
             self.errors = True
             self.exception = type(ex).__name__ + f"({ex})"
@@ -95,6 +122,7 @@ class Discard():
             raise
         
         self.completed = True
+        print("Completed")
         self.end()
     
     def write_meta_file(self):
@@ -103,7 +131,9 @@ class Discard():
                 'name': 'discard',
                 'version': '0.0.0'
             },
-            'command': 'TODO',
+            'command': self.command,
+            'mode': self.mode,
+            'is_user_account': self.is_user_account,
             'datetime_start': self.datetime_start.isoformat(),
             'datetime_end': self.datetime_end.isoformat() if self.datetime_end else None,
             'completed': self.completed,
@@ -152,13 +182,32 @@ class Discard():
         json.dump(obj, self.request_file)
         self.request_file.write('\n')
 
+@click.group()
+@click.option('-t', '--token', required=True, help='Bot or user token.',
+            envvar='DISCORD_TOKEN')
+@click.option('-U', '--is-user-account', default=False, is_flag=True, help='Whether to log in as a user account.')
+@click.pass_context
+def cli(ctx, token, is_user_account):
+    ctx.ensure_object(dict)
 
-@click.command()
-@click.option('--token', required=True, help='Bot or user token.')
-def main(token):
-    #with vcr.use_cassette('fixtures/vcr_cassettes/test4.yaml'):
-    discard = Discard(token=token)
+    ctx.obj['TOKEN'] = token
+    ctx.obj['IS_USER_ACOCUNT'] = is_user_account
+    ctx.obj['COMMAND'] = sys.argv
+
+@cli.command(help="Only log in and fetch profile information.")
+@click.pass_context
+def profile(ctx, ):
+    discard = Discard(token=ctx.obj['TOKEN'], is_user_account=ctx.obj['IS_USER_ACOCUNT'], command=ctx.obj['COMMAND'],
+                        mode="profile")
+    discard.run()
+
+@cli.command(help="Archive a single channel.")
+@click.option('-c', '--channel', required=True, help='Channel ID.', type=int) # TODO multiple
+@click.pass_context
+def channel(ctx, channel):
+    discard = Discard(token=ctx.obj['TOKEN'], is_user_account=ctx.obj['IS_USER_ACOCUNT'], command=ctx.obj['COMMAND'],
+                        mode="channel", channel=channel)
     discard.run()
 
 if __name__ == '__main__':
-    main()
+    cli()

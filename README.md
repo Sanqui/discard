@@ -10,7 +10,7 @@ I'm taking a stance: if a Discord server has a public invite, you have the right
 
 ## Usage
 
-The program needs a **Discord token** to operate.  It's compatible with both bot and user tokens.  Please check out [this guide](https://github.com/Tyrrrz/DiscordChatExporter/wiki/Obtaining-Token-and-Channel-IDs) on obtaining tokens.  The token can be provided on the command line with the `-t` parameter, or it can be read from a `DISCORD_TOKEN` enviromental variable.
+The program needs a **Discord token** to operate.  It's compatible with both bot and user tokens.  Please check out [this guide](https://github.com/Tyrrrz/DiscordChatExporter/wiki/Obtaining-Token-and-Channel-IDs) on obtaining tokens.  The token can be provided on the command line with the `-t` parameter, or it can be read from a `DISCORD_TOKEN` enviromental variable (recommended if you want to avoid logging the token).
 
 ```
     $ python -m discard profile
