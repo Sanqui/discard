@@ -9,9 +9,11 @@ import copy
 import random
 import string
 import gzip
+import asyncio
 
 import discord
 
+DISCARD_VERSION = "0.1.0"
 
 class NotFoundError(Exception):
     pass
@@ -41,6 +43,17 @@ class DiscardClient(discord.Client):
             return response
         
         self.http.request = request_func_wrapped
+    
+    # Override the default run method in order to preserve KeyboardInterrupt
+    def run(self, *args, **kwargs):
+        loop = self.loop
+
+        try:
+            loop.run_until_complete(self.start(*args, **kwargs))
+        except KeyboardInterrupt:
+            self.exception = sys.exc_info()
+        finally:
+            loop.close()
 
     async def on_ready(self):
         if self.discard.mode == 'profile':
@@ -213,7 +226,7 @@ class Discard():
             if self.client.exception:
                 t, v, tb = self.client.exception
                 raise v.with_traceback(tb)
-        except Exception as ex:
+        except BaseException as ex:
             self.errors = True
             self.exception = type(ex).__name__ + f": {ex}"
             self.traceback = traceback.format_exc()
@@ -228,7 +241,7 @@ class Discard():
         obj = {
             'client': {
                 'name': 'discard',
-                'version': '0.0.0'
+                'version': DISCARD_VERSION
             },
             'command': self.command,
             'settings': {
