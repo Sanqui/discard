@@ -61,29 +61,62 @@ class DiscardClient(discord.Client):
                 raise NotFoundError(f"Channel not found: {self.discard.channel_id}")
 
             print(f"Got channel: {channel}")
+            await self.archive_channel(channel)
 
-            self.discard.start_channel(channel)
+        elif self.discard.mode == 'guild':
+            guild = self.get_guild(self.discard.guild_id)
 
-            num_messages = 0
-            newest_message = None
-            message = None
-            
-            # before and after datetimes must be timezone-naive in UTC (why not timezone-aware UTC?)
-            async for message in channel.history(after=self.discard.after, before=self.discard.before, limit=None):
-                if newest_message == None:
-                    newest_message = message
-                # TODO capture reactions
+            if guild is None:
+                raise NotFoundError(f"Guild not found: {self.discard.channel_id}")
 
-                num_messages += 1
-                
-            oldest_message = message
-
-            self.discard.end_channel(channel, num_messages, oldest_message, newest_message)
+            print(f"Got guild: {guild}")
+            await self.archive_guild(guild)
         else:
             raise ValueError(f"Unknown mode: {self.discard.mode}")
 
         # Quit
         await self.close()
+    
+    async def archive_channel(self, channel: discord.abc.GuildChannel):
+        self.discard.start_channel(channel)
+
+        # XXX is it a good idea for userbots to do this?
+        #await self.fetch_channel(channel.id)
+
+        num_messages = 0
+        newest_message = None
+        message = None
+        
+        # before and after datetimes must be timezone-naive in UTC (why not timezone-aware UTC?)
+        async for message in channel.history(after=self.discard.after, before=self.discard.before, limit=None,
+                                                oldest_first=True):
+            if newest_message == None:
+                newest_message = message
+            # TODO capture reactions
+
+            num_messages += 1
+            
+        oldest_message = message
+
+        self.discard.end_channel(channel, num_messages, oldest_message, newest_message)
+    
+    async def archive_guild(self, guild: discord.Guild):
+        self.discard.start_guild(guild)
+
+        # XXX is it a good idea for userbots to do this?
+        await self.fetch_guild(guild.id)
+        await guild.fetch_channels()
+
+        self_member = guild.get_member(self.user.id)
+
+        num_channels = 0
+        for channel in guild.text_channels:
+            if channel.permissions_for(self_member).read_messages:
+                await self.archive_channel(channel)
+                num_channels += 1
+        
+        self.discard.end_guild(guild, num_channels)
+            
 
     async def on_socket_raw_send(self, payload):
         self.discard.log_ws_send(payload)
@@ -96,7 +129,7 @@ class DiscardClient(discord.Client):
         # so we save it and raise it outside.
 
         # TODO some errors would be best logged but kept non-fatal to still
-        # fetch the most data.
+        # fetch the most data possible.
         # Have an option for that.
 
         self.exception = sys.exc_info()
@@ -104,12 +137,13 @@ class DiscardClient(discord.Client):
 
 
 class Discard():
-    def __init__(self, token, mode, output_dir, command=None, channel_id=None,
+    def __init__(self, token, mode, output_dir, command=None, channel_id=None, guild_id=None,
                     is_user_account=False, no_scrub=False, before=None, after=None):
         self.token = token
         self.mode = mode
         self.command = command
         self.channel_id = channel_id
+        self.guild_id = guild_id
         self.is_user_account = is_user_account
         self.no_scrub = no_scrub
         self.output_dir_root = output_dir
@@ -129,6 +163,7 @@ class Discard():
         self.num_http_requests = 0
         self.num_ws_packets = 0
         self.num_messages = 0
+        self.num_guild_messages = 0
         self.profile = None
 
         self.run_directory = self.datetime_start.strftime('%Y%m%dT%H%M%S_'+self.mode)
@@ -222,8 +257,10 @@ class Discard():
     def start_channel(self, channel):
         self.request_file.close()
 
+        self.num_guild_messages = 0
+
         guild_id = channel.guild.id
-        os.mkdir(self.output_directory + str(guild_id))
+        os.makedirs(self.output_directory + str(guild_id), exist_ok=True)
         self.request_file = open(self.output_directory + f'{guild_id}/{channel.id}.jsonl', 'w')
     
     def end_channel(self, channel, num_messages, oldest_message, newest_message):
@@ -257,6 +294,29 @@ class Discard():
             json.dump(obj, f, indent=4, ensure_ascii=False)
         
         self.num_messages += num_messages
+        self.num_guild_messages += num_messages
+    
+    def start_guild(self, guild):
+        self.request_file.close()
+
+        os.mkdir(self.output_directory + str(guild.id))
+        self.request_file = open(self.output_directory + f'{guild.id}/guild.jsonl', 'w')
+
+    
+    def end_guild(self, guild, num_channels):
+        obj = {
+            'guild': {
+                'id': guild.id,
+                'name': guild.name,
+            },
+            'summary': {
+                'num_channels': num_channels,
+                'num_messages': self.num_guild_messages
+            }
+        }
+        
+        with open(self.output_directory + f'{guild.id}/guild.meta.json', 'w') as f:
+            json.dump(obj, f, indent=4, ensure_ascii=False)
     
     def log_http_request(self, route, kwargs, response, datetime_start, datetime_end):
         obj = {

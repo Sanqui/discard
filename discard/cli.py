@@ -34,5 +34,12 @@ def channel(ctx, channel_id):
     discard = Discard(mode="channel", channel_id=channel_id, **ctx.obj)
     discard.run()
 
+@cli.command(help="Archive a single guild.")
+@click.argument('guild_id', required=True, type=int)
+@click.pass_context
+def guild(ctx, guild_id):
+    discard = Discard(mode="guild", guild_id=guild_id, **ctx.obj)
+    discard.run()
+
 if __name__ == '__main__':
     cli()
