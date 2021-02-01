@@ -9,11 +9,8 @@ import copy
 import random
 import string
 
-import click
 import discord
-import vcr
 
-#logging.basicConfig(level=logging.DEBUG)
 
 class DiscardClient(discord.Client):
     def __init__(self, *args, discard=None, **kwargs):
@@ -102,6 +99,7 @@ class Discard():
         self.is_user_account = is_user_account
         self.no_scrub = no_scrub
         self.output_dir_root = output_dir
+        self.client = None
 
     def start(self):
         self.datetime_start = datetime.datetime.now(datetime.timezone.utc)
@@ -114,6 +112,7 @@ class Discard():
         self.traceback = None
         self.num_http_requests = 0
         self.num_ws_packets = 0
+        self.profile = None
 
         self.output_directory = self.output_dir_root + '/' + self.datetime_start.strftime('%Y%m%dT%H%M%S_'+self.mode)
         if os.path.exists(self.output_directory):
@@ -173,8 +172,17 @@ class Discard():
             'exception': self.exception,
             'traceback': self.traceback,
             'num_http_requests': self.num_http_requests,
-            'num_ws_packets': self.num_ws_packets
+            'num_ws_packets': self.num_ws_packets,
+            'profile': None
         }
+
+        if self.client and self.client.user:
+            obj['user'] = {
+                'id': self.client.user.id,
+                'name': self.client.user.name,
+                'discriminator': self.client.user.discriminator,
+                'bot': self.client.user.bot
+            }
 
         with open(self.output_directory + 'run.meta.json', 'w') as f:
             json.dump(obj, f, indent=4, ensure_ascii=False)
@@ -261,33 +269,3 @@ class Discard():
         json.dump(obj, self.request_file, ensure_ascii=False)
         self.request_file.write('\n')
         self.num_ws_packets += 1
-
-@click.group()
-@click.option('-t', '--token', required=True, help='Bot or user token.',
-            envvar='DISCORD_TOKEN')
-@click.option('-U', '--is-user-account', default=False, is_flag=True, help='Log in as a user account.')
-@click.option('-o', '--output-dir', default='out/', help='Output directory, out/ by default.',
-                type=click.Path(file_okay=False, writable=True))
-@click.option('--no-scrub', default=False, is_flag=True, help='Do not scrub token from logged data.')
-@click.pass_context
-def cli(ctx, **kwargs):
-    ctx.ensure_object(dict)
-
-    ctx.obj.update(kwargs)
-    ctx.obj['command'] = sys.argv
-
-@cli.command(help="Only log in and fetch profile information.")
-@click.pass_context
-def profile(ctx, ):
-    discard = Discard(mode="profile", **ctx.obj)
-    discard.run()
-
-@cli.command(help="Archive a single channel.")
-@click.argument('channel_id', required=True, type=int)
-@click.pass_context
-def channel(ctx, channel_id):
-    discard = Discard(mode="channel", channel_id=channel_id, **ctx.obj)
-    discard.run()
-
-if __name__ == '__main__':
-    cli()
