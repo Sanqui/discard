@@ -1,0 +1,54 @@
+interactions:
+- request:
+    body: null
+    headers:
+      User-Agent:
+      - DiscordBot (https://github.com/Rapptz/discord.py 1.6.0) Python/3.9 aiohttp/3.7.3
+      X-Ratelimit-Precision:
+      - millisecond
+    method: GET
+    uri: https://discord.com/api/v7/users/@me
+  response:
+    body:
+      string: '{"message": "401: Unauthorized", "code": 0}'
+    headers:
+      Alt-Svc:
+      - h3-27=":443"; ma=86400, h3-28=":443"; ma=86400, h3-29=":443"; ma=86400
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 61ae55af3ec5278c-PRG
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '43'
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 01 Feb 2021 20:13:44 GMT
+      Expect-CT:
+      - max-age=604800, report-uri="https://report-uri.cloudflare.com/cdn-cgi/beacon/expect-ct"
+      NEL:
+      - '{"max_age":604800,"report_to":"cf-nel"}'
+      Report-To:
+      - '{"max_age":604800,"group":"cf-nel","endpoints":[{"url":"https:\/\/a.nel.cloudflare.com\/report?s=eBii7HKbI0nLr1YtYOvnNeM6j0FXaopv0qBapcjrWIRZ%2B3qr%2Fy0fS214EiyiFHS4ieQCbVCZ%2FEjyAoVzQOeFWlTLx8GYC9Y6Mu1ppQ%3D%3D"}]}'
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cfduid=d13d8f0342c8f2564964f167fb90ab1cb1612210424; expires=Wed, 03-Mar-21
+        20:13:44 GMT; path=/; domain=.discord.com; HttpOnly; SameSite=Lax; Secure
+      Via:
+      - 1.1 google
+      X-Content-Type-Options:
+      - nosniff
+      cf-request-id:
+      - 0800d3e1800000278c6f0a6000000001
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-envoy-upstream-service-time:
+      - '5'
+    status:
+      code: 401
+      message: Unauthorized
+    url: https://discord.com/api/v7/users/@me
+version: 1

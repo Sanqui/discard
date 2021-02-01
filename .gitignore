@@ -1,5 +1,6 @@
 .venv/
 .vscode/
 __pycache__/
+.pytest_cache/
 fixtures/
 out/

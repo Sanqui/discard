@@ -10,6 +10,7 @@ import random
 import string
 import gzip
 import asyncio
+from pathlib import Path
 
 import discord
 
@@ -121,11 +122,9 @@ class DiscardClient(discord.Client):
         await self.fetch_guild(guild.id)
         await guild.fetch_channels()
 
-        self_member = guild.get_member(self.user.id)
-
         num_channels = 0
         for channel in guild.text_channels:
-            if channel.permissions_for(self_member).read_messages:
+            if channel.permissions_for(guild.me).read_messages:
                 await self.archive_channel(channel)
                 num_channels += 1
         
@@ -167,6 +166,8 @@ class Discard():
         self.after = after
         self.gzip = gzip
 
+        self.client = DiscardClient(discard=self)
+
     def start(self):
         self.datetime_start = datetime.datetime.now(datetime.timezone.utc)
         self.ident = ''.join([random.choice(string.ascii_lowercase + string.digits) for i in range(24)])
@@ -183,13 +184,12 @@ class Discard():
         self.profile = None
 
         self.run_directory = self.datetime_start.strftime('%Y%m%dT%H%M%S_'+self.mode)
-        self.output_directory = self.output_dir_root + '/' + self.run_directory
+        self.output_directory = self.output_dir_root / Path(self.run_directory)
         if os.path.exists(self.output_directory):
             self.run_directory += "_" + self.ident[0:5]
-            self.output_directory += "_" + self.ident[0:5]
+            self.output_directory = self.output_dir_root / Path(self.run_directory)
         if os.path.exists(self.output_directory):
             raise RuntimeError("Fatal: Run directory already exists")
-        self.output_directory += "/"
         os.makedirs(self.output_directory)
 
         self.write_meta_file()
@@ -197,17 +197,18 @@ class Discard():
         self.open_request_file('run.jsonl')
     
     def open_request_file(self, filepath):
-        if '/' in filepath:
-            os.makedirs(self.output_directory + filepath.split('/')[0], exist_ok=True)
+        filepath = Path(filepath)
+        if len(filepath.parts) > 1:
+            os.makedirs(self.output_directory / filepath.parts[0], exist_ok=True)
         
         if self.gzip:
-            filepath += '.gz'
+            filepath = filepath.with_name(filepath.name + '.gz')
 
-        if os.path.exists(self.output_directory + filepath):
+        if os.path.exists(self.output_directory / filepath):
             raise RuntimeError("Request file already exists")
         
         open_func = gzip.open if self.gzip else open
-        self.request_file = open_func(self.output_directory + filepath, 'wt')
+        self.request_file = open_func(self.output_directory / filepath, 'wt')
     
     def end(self):
         self.request_file.close()
@@ -221,7 +222,6 @@ class Discard():
         self.start()
 
         try:
-            self.client = DiscardClient(discard=self)
             self.client.run(self.token, bot=not self.is_user_account)
             if self.client.exception:
                 t, v, tb = self.client.exception
@@ -248,10 +248,11 @@ class Discard():
                 'mode': self.mode,
                 'token': self.token if self.no_scrub else None,
                 'is_user_account': self.is_user_account,
-                'output_dir': self.output_dir_root,
+                'output_dir': str(self.output_dir_root),
                 'after': self.before.isoformat() if self.before else None,
                 'before': self.after.isoformat() if self.after else None,
-                'no_scrub': self.no_scrub
+                'no_scrub': self.no_scrub,
+                'gzip': self.gzip
             },
             'run': {
                 'datetime_start': self.datetime_start.isoformat(),
@@ -280,7 +281,7 @@ class Discard():
                 'bot': self.client.user.bot
             }
 
-        with open(self.output_directory + 'run.meta.json', 'w') as f:
+        with open(self.output_directory / Path('run.meta.json'), 'w') as f:
             json.dump(obj, f, indent=4, ensure_ascii=False)
     
     def start_channel(self, channel):
@@ -318,7 +319,7 @@ class Discard():
                 'timestamp': newest_message.created_at.isoformat()
             }
 
-        with open(self.output_directory + f'{channel.guild.id}/{channel.id}.meta.json', 'w') as f:
+        with open(self.output_directory / Path(f'{channel.guild.id}/{channel.id}.meta.json'), 'w') as f:
             json.dump(obj, f, indent=4, ensure_ascii=False)
         
         self.num_messages += num_messages
@@ -342,7 +343,7 @@ class Discard():
             }
         }
         
-        with open(self.output_directory + f'{guild.id}/guild.meta.json', 'w') as f:
+        with open(self.output_directory / Path(f'{guild.id}/guild.meta.json'), 'w') as f:
             json.dump(obj, f, indent=4, ensure_ascii=False)
     
     def log_http_request(self, route, kwargs, response, datetime_start, datetime_end):

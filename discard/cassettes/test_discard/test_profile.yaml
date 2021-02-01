@@ -1,0 +1,122 @@
+interactions:
+- request:
+    body: null
+    headers:
+      User-Agent:
+      - DiscordBot (https://github.com/Rapptz/discord.py 1.6.0) Python/3.9 aiohttp/3.7.3
+      X-Ratelimit-Precision:
+      - millisecond
+    method: GET
+    uri: https://discord.com/api/v7/users/@me
+  response:
+    body:
+      string: '{"id": "788430627179462657", "username": "DiscardTest", "avatar": null,
+        "discriminator": "9433", "public_flags": 0, "flags": 0, "bot": true, "email":
+        null, "verified": true, "locale": "en-US", "mfa_enabled": true}'
+    headers:
+      Alt-Svc:
+      - h3-27=":443"; ma=86400, h3-28=":443"; ma=86400, h3-29=":443"; ma=86400
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 61ae55ac491f27b8-PRG
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 01 Feb 2021 20:13:43 GMT
+      Expect-CT:
+      - max-age=604800, report-uri="https://report-uri.cloudflare.com/cdn-cgi/beacon/expect-ct"
+      NEL:
+      - '{"report_to":"cf-nel","max_age":604800}'
+      Report-To:
+      - '{"group":"cf-nel","endpoints":[{"url":"https:\/\/a.nel.cloudflare.com\/report?s=Xp8ZNJXypjE5UgF9472mSU8zfdKnATPR%2F3%2FdI6iabKPsKKPEJS5ngivYa9K%2Fu8ATnRfmN93ET25cc9LIgS2Le9UrmSuKqMKceHOzEw%3D%3D"}],"max_age":604800}'
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cfduid=dbb9faa1692bf20b3b9bc9db774b2b9b01612210423; expires=Wed, 03-Mar-21
+        20:13:43 GMT; path=/; domain=.discord.com; HttpOnly; SameSite=Lax; Secure
+      Transfer-Encoding:
+      - chunked
+      Via:
+      - 1.1 google
+      X-Content-Type-Options:
+      - nosniff
+      cf-request-id:
+      - 0800d3dfa9000027b860333000000001
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-envoy-upstream-service-time:
+      - '64'
+    status:
+      code: 200
+      message: OK
+    url: https://discord.com/api/v7/users/@me
+- request:
+    body: null
+    headers:
+      Cookie:
+      - __cfduid=dbb9faa1692bf20b3b9bc9db774b2b9b01612210423
+      User-Agent:
+      - DiscordBot (https://github.com/Rapptz/discord.py 1.6.0) Python/3.9 aiohttp/3.7.3
+      X-Ratelimit-Precision:
+      - millisecond
+    method: GET
+    uri: https://discord.com/api/v7/users/788430627179462657
+  response:
+    body:
+      string: '{"id": "788430627179462657", "username": "DiscardTest", "avatar": null,
+        "discriminator": "9433", "public_flags": 0, "bot": true}'
+    headers:
+      Alt-Svc:
+      - h3-27=":443"; ma=86400, h3-28=":443"; ma=86400, h3-29=":443"; ma=86400
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 61ae55adedc027b8-PRG
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 01 Feb 2021 20:13:44 GMT
+      Expect-CT:
+      - max-age=604800, report-uri="https://report-uri.cloudflare.com/cdn-cgi/beacon/expect-ct"
+      NEL:
+      - '{"report_to":"cf-nel","max_age":604800}'
+      Report-To:
+      - '{"group":"cf-nel","endpoints":[{"url":"https:\/\/a.nel.cloudflare.com\/report?s=y7GHi54wKmJOpkalrz4vmn03gwA4rEZfvazh8zsIvp2liTvKRGEpd6AGWpv9YatVwlQ3clns%2B01jVe6U%2BBUKtYFoAyvuhC07%2BPZfBA%3D%3D"}],"max_age":604800}'
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      Via:
+      - 1.1 google
+      X-Content-Type-Options:
+      - nosniff
+      cf-request-id:
+      - 0800d3e0b3000027b82c8be000000001
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-envoy-upstream-service-time:
+      - '8'
+      x-ratelimit-bucket:
+      - aa6a962e04660e4eb788914e1ef32c12
+      x-ratelimit-limit:
+      - '30'
+      x-ratelimit-remaining:
+      - '29'
+      x-ratelimit-reset:
+      - '1612210454.052'
+      x-ratelimit-reset-after:
+      - '30.000'
+    status:
+      code: 200
+      message: OK
+    url: https://discord.com/api/v7/users/788430627179462657
+version: 1
