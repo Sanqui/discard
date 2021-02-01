@@ -19,12 +19,32 @@ The program needs a **Discord token** to operate.  It's compatible with both bot
 Attempt to log in and display basic profile information.
 
 ```
-    $ python -m discard run -g <guild1_id>,<guild2_id> --from <date> --to <date>
+    $ python -m discard channel <channel_id>
 ```
 
-Perform an archival run for the given guilds in the given date range.
+Perform an archival run for the given channel in its entirety.
 
-Discard is designed to run daily incremental backups.  The feasibility of a realtime archiver is due future study.
+```
+    $ python -m discard --after <datetime> --before <datetime> guild <guild_id>
+```
+
+The following command-line options are available:
+
+```
+  -t, --token TEXT                Bot or user token.  [required]
+  -U, --is-user-account           Log in as a user account.
+  -o, --output-dir DIRECTORY      Output directory, out/ by default.
+  --after [%Y-%m-%d|%Y-%m-%dT%H:%M:%S]
+                                  Datetime after which to retrieve history (UTC)
+  --before [%Y-%m-%d|%Y-%m-%dT%H:%M:%S]
+                                  Datetime before which to retrieve history (UTC)
+  --no-scrub                      Do not scrub token from logged data.
+  --gzip                          Save logs compressed with gzip.
+```
+
+Archive all messages in the given guild (Discord server) within the given date range.
+
+Discard is designed to create one-shot archives of the entire chatlog as well as for daily incremental backups.  The feasibility of a realtime archiver is due future study.
 
 ## Output
 You can find example output from a single guild run in the example/ directory of this repository.
