@@ -6,6 +6,8 @@ import datetime
 import json
 import traceback
 import copy
+import random
+import string
 
 import click
 import discord
@@ -92,16 +94,18 @@ class DiscardClient(discord.Client):
 
 
 class Discard():
-    def __init__(self, token, mode, command=None, channel_id=None, is_user_account=False, no_scrub=False):
+    def __init__(self, token, mode, output_dir, command=None, channel_id=None, is_user_account=False, no_scrub=False):
         self.token = token
         self.mode = mode
         self.command = command
         self.channel_id = channel_id
         self.is_user_account = is_user_account
         self.no_scrub = no_scrub
+        self.output_dir_root = output_dir
 
     def start(self):
         self.datetime_start = datetime.datetime.now(datetime.timezone.utc)
+        self.ident = ''.join([random.choice(string.ascii_lowercase + string.digits) for i in range(24)])
         self.datetime_end = None
         self.finished = False
         self.completed = False
@@ -111,8 +115,13 @@ class Discard():
         self.num_http_requests = 0
         self.num_ws_packets = 0
 
-        self.output_directory = f'out/{self.datetime_start}/'
-        os.mkdir(self.output_directory)
+        self.output_directory = self.output_dir_root + '/' + self.datetime_start.strftime('%Y%m%dT%H%M%S_'+self.mode)
+        if os.path.exists(self.output_directory):
+            self.output_directory += "_" + self.ident[0:5]
+        if os.path.exists(self.output_directory):
+            raise RuntimeError("Fatal: Run directory already exists")
+        self.output_directory += "/"
+        os.makedirs(self.output_directory)
 
         self.write_meta_file()
 
@@ -157,6 +166,7 @@ class Discard():
             'is_user_account': self.is_user_account,
             'datetime_start': self.datetime_start.isoformat(),
             'datetime_end': self.datetime_end.isoformat() if self.datetime_end else None,
+            'ident': self.ident,
             'completed': self.completed,
             'finished': self.finished,
             'errors': self.errors,
@@ -256,14 +266,14 @@ class Discard():
 @click.option('-t', '--token', required=True, help='Bot or user token.',
             envvar='DISCORD_TOKEN')
 @click.option('-U', '--is-user-account', default=False, is_flag=True, help='Log in as a user account.')
+@click.option('-o', '--output-dir', default='out/', help='Output directory, out/ by default.',
+                type=click.Path(file_okay=False, writable=True))
 @click.option('--no-scrub', default=False, is_flag=True, help='Do not scrub token from logged data.')
 @click.pass_context
-def cli(ctx, token, is_user_account, no_scrub):
+def cli(ctx, **kwargs):
     ctx.ensure_object(dict)
 
-    ctx.obj['token'] = token
-    ctx.obj['is_user_account'] = is_user_account
-    ctx.obj['no_scrub'] = no_scrub
+    ctx.obj.update(kwargs)
     ctx.obj['command'] = sys.argv
 
 @cli.command(help="Only log in and fetch profile information.")
