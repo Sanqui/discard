@@ -27,82 +27,47 @@ Perform an archival run for the given guilds in the given date range.
 Discard is designed to run daily incremental backups.  The feasibility of a realtime archiver is due future study.
 
 ## Output
-Discard outputs JSON files with the following directory structure:
+You can find example output from a single guild run in the example/ directory of this repository.
+
+In the specified output directory, Discord creates a new directory for the current run and saves JSON files with the following structure:
 
 ```
-    <run datetime>/
+    <run_datetime>_<mode>/
     |___run.meta.json
-    |___run.json
+    |___run.jsonl
     |___<guild_id>/
         |___guild.meta.json
-        |___guild.json
+        |___guild.jsonl
         |___<channel_id>.meta.json
-        |___<channel_id>.json
-```
-
-The `run.meta.json` file contains metadata about the run:
-
-```json
-{
-    "client": {
-        "name": "discard",
-        "version": "0.0.0",
-        "commit": "0123deadbeef"
-    },
-    "command": "python -m discard run --from 2020-12-14T00:00:00 --to 2020-12-15T00:00:00",
-    "run_uuid": "7b6034d9-6290-47a5-9e3e-a6db23a2dd05",
-    "datetime_start": "2020-12-15T13:00:19",
-    "datetime_end": "2020-12-15T14:00:19",
-    "completed": true,
-    "errors": false,
-    "exception": null,
-    "requests": 125
-}
-```
-
-It is written when the archival starts and again when it finishes correctly or when it terminates in case of an error.  In particular, note the exact version of the client as well as the command used for the backup run.
-
-The "non-meta" files contain lists of HTTP requests and websocket exchanges as in the following example:
-```json
-[
-    {
-        "type": "http",
-        "datetime": "2020-12-15T13:10:19",
-        "request": {
-            "method": "GET",
-            "url": "/api/v8/channels/716047609776832626/messages"
-        },
-        "response": {
-            "json": {...}
-        }
-    },
-    {
-        "type": "ws",
-        "datetime": "2020-12-15T13:10:19",
-        "response": {
-            "json": {...}
-        }
+        |___<channel_id>.jsonl
+        ...
     ...
-]
 ```
+
+The `run.meta.json` file contains metadata about the run.  It saves the current client version, the exact command used to launch the run, settings, details about the run progress, and a summary of the gathered data.  It is written when the run is started and again when it finishes correctly or when it terminates in case of an error.
+
+The JSONL files contain newline separated objects describing HTTP requests and websocket exchanges pertaining to the given run, guild, or channel.  These files are an exact log of the interactions made with the Discord API in order to gather all relevant information.  They are streamed and can optionally be compressed in the GZIP format.
 
 Typically the following requests are made:
 
-* run.json
-    * standard login requests with sensitive information stripped out
-    * `GET /api/v8/users/@me`
-    * guild discovery
-* guild.json
-    * ...
-* <channel_id>.json
-    * `GET api/v8/channels/<channel_id>/messages?limit=50` while in the desired range
-    * when encountering an invite: `GET /api/v8/invites/<invite_id>`
+* run.jsonl
+    * `GET /api/v7/users/@me`
+    * `GET /api/v7/gateway`
+    * Standard websocket interactions
+* `<guild_id>`/guild.jsonl
+    * `GET /api/v7/guilds/<guild_id>`
+    * `GET /api/v7/guilds/<guild_id>/channels`
+    * TODO: fetch websockets if there is permission
+* `<guild_id>`/`<channel_id>`.jsonl
+    * `GET api/v8/channels/<channel_id>/messages?limit=100` while in the desired range
+    * TODO: when encountering an invite: `GET /api/v8/invites/<invite_id>`
+    * TODO: when encountering a reaction
 
 ## Why not use [DiscordChatExporter](https://github.com/Tyrrrz/DiscordChatExporter)?
 
-[DiscordChatExporter](https://github.com/Tyrrrz/DiscordChatExporter) is an excellent tool for end users.  If you're a single person who wants to make a few backups, please, **go ahead and use it**.  It has a straightforward GUI and multiple formatting options, particularly HTML, which allows for exporting chat logs that are easy to browse.  I've even made a brief contribution myself.
+[DiscordChatExporter](https://github.com/Tyrrrz/DiscordChatExporter) is an excellent tool for end users.  If you're somebody who just wants to make a few backups, please, **go ahead and use it**.  It has a straightforward GUI and multiple formatting options, particularly HTML, which allows for exporting chat logs that are easy to browse.  I've even made a brief contribution myself.
 
-What does Discard do differently?  Discard is a more advanced archival tool.  Its goal is to **record Discord API responses** with minimal data processing.  This allows for certainty that no data is missed, even for exotic types of content, or in case Discord changes its API.  The data can then further be derived by other tools.
+What does Discard do differently?  Discard is a more advanced archival tool.  Its goal is to **record Discord API responses** with minimal data processing.  This allows for certainty that no data is missed, even for exotic types of content, or in case Discord changes its API (such as when replies were introduced!).  The idea is that as long as the data is complete, it can always be further derived by other tools.
 
 In particular, I hope to address these issues with DiscordChatExporter which have been marked as out of scope:
 
@@ -111,7 +76,7 @@ In particular, I hope to address these issues with DiscordChatExporter which hav
 * Users in a Discord server are not downloaded ([#104](https://github.com/Tyrrrz/DiscordChatExporter/issues/104))
 * Authors of reactions are not fetched ([#133](https://github.com/Tyrrrz/DiscordChatExporter/issues/133))
 
-Again, none of this is to flak DiscordChatExporter, the two projects simply have different goals.
+There is no intention to diss DiscordChatExporter, the two projects simply have different goals.
 
 ## Disclaimer
 

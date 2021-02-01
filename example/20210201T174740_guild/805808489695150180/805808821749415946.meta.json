@@ -1,0 +1,18 @@
+{
+    "channel": {
+        "id": 805808821749415946,
+        "name": "test",
+        "type": "text"
+    },
+    "summary": {
+        "num_messages": 1,
+        "oldest_message": {
+            "id": 805808839671676939,
+            "timestamp": "2021-02-01T14:36:38.582000"
+        },
+        "newest_message": {
+            "id": 805808839671676939,
+            "timestamp": "2021-02-01T14:36:38.582000"
+        }
+    }
+}

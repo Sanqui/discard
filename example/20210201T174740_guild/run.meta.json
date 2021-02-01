@@ -1,0 +1,42 @@
+{
+    "client": {
+        "name": "discard",
+        "version": "0.1.0"
+    },
+    "command": [
+        "/home/sanqui/archive/discord/discard/discard/__main__.py",
+        "guild",
+        "805808489695150180"
+    ],
+    "settings": {
+        "mode": "guild",
+        "token": null,
+        "is_user_account": false,
+        "output_dir": "out/",
+        "after": null,
+        "before": null,
+        "no_scrub": false
+    },
+    "run": {
+        "datetime_start": "2021-02-01T17:47:40.375815+00:00",
+        "datetime_end": "2021-02-01T17:47:43.724238+00:00",
+        "run_directory": "20210201T174740_guild",
+        "ident": "9rk7i81i32udny753nbmfcyn",
+        "completed": true,
+        "finished": true,
+        "errors": false,
+        "exception": null,
+        "traceback": null
+    },
+    "summary": {
+        "num_http_requests": 6,
+        "num_ws_packets": 6,
+        "num_messages": 6
+    },
+    "user": {
+        "id": 788430627179462657,
+        "name": "DiscardTest",
+        "discriminator": "9433",
+        "bot": true
+    }
+}
