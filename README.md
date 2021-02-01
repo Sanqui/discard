@@ -80,7 +80,7 @@ Typically the following requests are made:
 * `<guild_id>`/guild.jsonl
     * `GET /api/v7/guilds/<guild_id>`
     * `GET /api/v7/guilds/<guild_id>/channels`
-    * TODO: fetch websockets if there is permission
+    * TODO: fetch webhooks if there is permission
 * `<guild_id>`/`<channel_id>`.jsonl
     * `GET api/v8/channels/<channel_id>/messages?limit=100` while in the desired range
     * TODO: when encountering an invite: `GET /api/v8/invites/<invite_id>`

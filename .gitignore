@@ -3,4 +3,7 @@
 __pycache__/
 .pytest_cache/
 fixtures/
+build/
+dist/
+discord_discard.egg-info/
 out/
