@@ -10,7 +10,12 @@ I'm taking a stance: if a Discord server has a public invite, you have the right
 
 ## Usage
 
-The program needs a **Discord token** to operate.  It's compatible with both bot and user tokens.  Please check out [this guide](https://github.com/Tyrrrz/DiscordChatExporter/wiki/Obtaining-Token-and-Channel-IDs) on obtaining tokens.  The token can be provided on the command line with the `-t` parameter, or it can be read from a `DISCORD_TOKEN` enviromental variable (recommended if you want to avoid logging the token).
+In order to use this software, you must comply with the [Discard Ethical License Version 1](LICENSE.md).
+
+Discard is a Python command-line utility as well as a library.
+
+Discard needs a **Discord token** to operate.  It's compatible with both bot and user tokens.  Please check out [this guide](https://github.com/Tyrrrz/DiscordChatExporter/wiki/Obtaining-Token-and-Channel-IDs) on obtaining tokens.  The token can be provided on the command line with the `-t` parameter, or it can be read from a `DISCORD_TOKEN` enviromental variable (recommended if you want to avoid logging the token).
+
 
 ```
     $ python -m discard profile
@@ -41,8 +46,6 @@ The following command-line options are available:
   --no-scrub                      Do not scrub token from logged data.
   --gzip                          Save logs compressed with gzip.
 ```
-
-Archive all messages in the given guild (Discord server) within the given date range.
 
 Discard is designed to create one-shot archives of the entire chatlog as well as for daily incremental backups.  The feasibility of a realtime archiver is due future study.
 
