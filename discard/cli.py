@@ -14,6 +14,7 @@ from discard import Discard
 @click.option('--after', help="Datetime after which to retrieve history (UTC)", type=click.DateTime())
 @click.option('--before', help="Datetime before which to retrieve history (UTC)", type=click.DateTime())
 @click.option('--no-scrub', default=False, is_flag=True, help='Do not scrub token from logged data.')
+@click.option('--gzip', default=False, is_flag=True, help='Save logs compressed with gzip.')
 @click.pass_context
 def cli(ctx, **kwargs):
     ctx.ensure_object(dict)

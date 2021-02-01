@@ -8,6 +8,7 @@ import traceback
 import copy
 import random
 import string
+import gzip
 
 import discord
 
@@ -67,7 +68,7 @@ class DiscardClient(discord.Client):
             guild = self.get_guild(self.discard.guild_id)
 
             if guild is None:
-                raise NotFoundError(f"Guild not found: {self.discard.channel_id}")
+                raise NotFoundError(f"Guild not found: {self.discard.guild_id}")
 
             print(f"Got guild: {guild}")
             await self.archive_guild(guild)
@@ -138,7 +139,8 @@ class DiscardClient(discord.Client):
 
 class Discard():
     def __init__(self, token, mode, output_dir, command=None, channel_id=None, guild_id=None,
-                    is_user_account=False, no_scrub=False, before=None, after=None):
+                    is_user_account=False, no_scrub=False, before=None, after=None,
+                    gzip=False):
         self.token = token
         self.mode = mode
         self.command = command
@@ -150,6 +152,7 @@ class Discard():
         self.client = None
         self.before = before
         self.after = after
+        self.gzip = gzip
 
     def start(self):
         self.datetime_start = datetime.datetime.now(datetime.timezone.utc)
@@ -178,7 +181,20 @@ class Discard():
 
         self.write_meta_file()
 
-        self.request_file = open(self.output_directory + 'run.jsonl', 'w')
+        self.open_request_file('run.jsonl')
+    
+    def open_request_file(self, filepath):
+        if '/' in filepath:
+            os.makedirs(self.output_directory + filepath.split('/')[0], exist_ok=True)
+        
+        if self.gzip:
+            filepath += '.gz'
+
+        if os.path.exists(self.output_directory + filepath):
+            raise RuntimeError("Request file already exists")
+        
+        open_func = gzip.open if self.gzip else open
+        self.request_file = open_func(self.output_directory + filepath, 'wt')
     
     def end(self):
         self.request_file.close()
@@ -260,8 +276,7 @@ class Discard():
         self.num_guild_messages = 0
 
         guild_id = channel.guild.id
-        os.makedirs(self.output_directory + str(guild_id), exist_ok=True)
-        self.request_file = open(self.output_directory + f'{guild_id}/{channel.id}.jsonl', 'w')
+        self.open_request_file(f'{guild_id}/{channel.id}.jsonl')
     
     def end_channel(self, channel, num_messages, oldest_message, newest_message):
         # This information is intentionally minimalistic. It's supposed to be
@@ -299,8 +314,7 @@ class Discard():
     def start_guild(self, guild):
         self.request_file.close()
 
-        os.mkdir(self.output_directory + str(guild.id))
-        self.request_file = open(self.output_directory + f'{guild.id}/guild.jsonl', 'w')
+        self.open_request_file(f'{guild.id}/guild.jsonl')
 
     
     def end_guild(self, guild, num_channels):
