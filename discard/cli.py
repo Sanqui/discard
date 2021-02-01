@@ -1,3 +1,6 @@
+import sys
+import datetime
+
 import click
 
 from discard import Discard
@@ -8,6 +11,8 @@ from discard import Discard
 @click.option('-U', '--is-user-account', default=False, is_flag=True, help='Log in as a user account.')
 @click.option('-o', '--output-dir', default='out/', help='Output directory, out/ by default.',
                 type=click.Path(file_okay=False, writable=True))
+@click.option('--after', help="Datetime after which to retrieve history (UTC)", type=click.DateTime())
+@click.option('--before', help="Datetime before which to retrieve history (UTC)", type=click.DateTime())
 @click.option('--no-scrub', default=False, is_flag=True, help='Do not scrub token from logged data.')
 @click.pass_context
 def cli(ctx, **kwargs):

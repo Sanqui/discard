@@ -12,6 +12,10 @@ import string
 import discord
 
 
+class NotFoundError(Exception):
+    pass
+
+
 class DiscardClient(discord.Client):
     def __init__(self, *args, discard=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -53,15 +57,19 @@ class DiscardClient(discord.Client):
         elif self.discard.mode == 'channel':
             channel = self.get_channel(self.discard.channel_id)
 
+            if channel is None:
+                raise NotFoundError(f"Channel not found: {self.discard.channel_id}")
+
             print(f"Got channel: {channel}")
 
             self.discard.start_channel(channel)
 
             num_messages = 0
             newest_message = None
-            oldest_message = None
+            message = None
             
-            async for message in channel.history(limit=None):
+            # before and after datetimes must be timezone-naive in UTC (why not timezone-aware UTC?)
+            async for message in channel.history(after=self.discard.after, before=self.discard.before, limit=None):
                 if newest_message == None:
                     newest_message = message
                 # TODO capture reactions
@@ -86,12 +94,18 @@ class DiscardClient(discord.Client):
     async def on_error(self, event_method, *args, **kwargs):
         # Reraising the exception doesn't close the connection,
         # so we save it and raise it outside.
+
+        # TODO some errors would be best logged but kept non-fatal to still
+        # fetch the most data.
+        # Have an option for that.
+
         self.exception = sys.exc_info()
         await self.close()
 
 
 class Discard():
-    def __init__(self, token, mode, output_dir, command=None, channel_id=None, is_user_account=False, no_scrub=False):
+    def __init__(self, token, mode, output_dir, command=None, channel_id=None,
+                    is_user_account=False, no_scrub=False, before=None, after=None):
         self.token = token
         self.mode = mode
         self.command = command
@@ -100,6 +114,8 @@ class Discard():
         self.no_scrub = no_scrub
         self.output_dir_root = output_dir
         self.client = None
+        self.before = before
+        self.after = after
 
     def start(self):
         self.datetime_start = datetime.datetime.now(datetime.timezone.utc)
@@ -112,10 +128,13 @@ class Discard():
         self.traceback = None
         self.num_http_requests = 0
         self.num_ws_packets = 0
+        self.num_messages = 0
         self.profile = None
 
-        self.output_directory = self.output_dir_root + '/' + self.datetime_start.strftime('%Y%m%dT%H%M%S_'+self.mode)
+        self.run_directory = self.datetime_start.strftime('%Y%m%dT%H%M%S_'+self.mode)
+        self.output_directory = self.output_dir_root + '/' + self.run_directory
         if os.path.exists(self.output_directory):
+            self.run_directory += "_" + self.ident[0:5]
             self.output_directory += "_" + self.ident[0:5]
         if os.path.exists(self.output_directory):
             raise RuntimeError("Fatal: Run directory already exists")
@@ -145,7 +164,7 @@ class Discard():
                 raise v.with_traceback(tb)
         except Exception as ex:
             self.errors = True
-            self.exception = type(ex).__name__ + f"({ex})"
+            self.exception = type(ex).__name__ + f": {ex}"
             self.traceback = traceback.format_exc()
             self.end()
             raise
@@ -161,19 +180,32 @@ class Discard():
                 'version': '0.0.0'
             },
             'command': self.command,
-            'mode': self.mode,
-            'is_user_account': self.is_user_account,
-            'datetime_start': self.datetime_start.isoformat(),
-            'datetime_end': self.datetime_end.isoformat() if self.datetime_end else None,
-            'ident': self.ident,
-            'completed': self.completed,
-            'finished': self.finished,
-            'errors': self.errors,
-            'exception': self.exception,
-            'traceback': self.traceback,
-            'num_http_requests': self.num_http_requests,
-            'num_ws_packets': self.num_ws_packets,
-            'profile': None
+            'settings': {
+                'mode': self.mode,
+                'token': self.token if self.no_scrub else None,
+                'is_user_account': self.is_user_account,
+                'output_dir': self.output_dir_root,
+                'after': self.before.isoformat() if self.before else None,
+                'before': self.after.isoformat() if self.after else None,
+                'no_scrub': self.no_scrub
+            },
+            'run': {
+                'datetime_start': self.datetime_start.isoformat(),
+                'datetime_end': self.datetime_end.isoformat() if self.datetime_end else None,
+                'run_directory': self.run_directory,
+                'ident': self.ident,
+                'completed': self.completed,
+                'finished': self.finished,
+                'errors': self.errors,
+                'exception': self.exception,
+                'traceback': self.traceback,
+            },
+            'summary': {
+                'num_http_requests': self.num_http_requests,
+                'num_ws_packets': self.num_ws_packets,
+                'num_messages': self.num_messages
+            },
+            'user': None
         }
 
         if self.client and self.client.user:
@@ -203,7 +235,7 @@ class Discard():
                 'name': channel.name,
                 'type': str(channel.type)
             },
-            'run': {
+            'summary': {
                 'num_messages': num_messages,
                 'oldest_message': None,
                 'newest_message': None
@@ -211,18 +243,20 @@ class Discard():
         }
 
         if oldest_message is not None:
-            obj['run']['oldest_message'] = {
+            obj['summary']['oldest_message'] = {
                 'id': oldest_message.id,
                 'timestamp': oldest_message.created_at.isoformat() # TODO these need to be converted to UTC!
             }
         if newest_message is not None:
-            obj['run']['newest_message'] = {
+            obj['summary']['newest_message'] = {
                 'id': newest_message.id,
                 'timestamp': newest_message.created_at.isoformat()
             }
 
         with open(self.output_directory + f'{channel.guild.id}/{channel.id}.meta.json', 'w') as f:
             json.dump(obj, f, indent=4, ensure_ascii=False)
+        
+        self.num_messages += num_messages
     
     def log_http_request(self, route, kwargs, response, datetime_start, datetime_end):
         obj = {
