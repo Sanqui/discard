@@ -9,9 +9,6 @@ At [Archive Team](https://archiveteam.org/), we're working tirelessly to preserv
 I'm taking a stance: if a Discord server has a public invite, you have the right to archive it.  Let's make that happen.
 
 ## Usage
-
-In order to use this software, you must comply with the [Discard Ethical License Version 1](LICENSE.md).
-
 Discard is a Python command-line utility as well as a library.
 
 Discard needs a **Discord token** to operate.  It's compatible with both bot and user tokens.  Please check out [this guide](https://github.com/Tyrrrz/DiscordChatExporter/wiki/Obtaining-Token-and-Channel-IDs) on obtaining tokens.  The token can be provided on the command line with the `-t` parameter, or it can be read from a `DISCORD_TOKEN` enviromental variable (recommended if you want to avoid logging the token).
