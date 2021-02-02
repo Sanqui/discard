@@ -24,11 +24,13 @@ Attempt to log in and display basic profile information.
     $ python -m discard channel <channel_id>
 ```
 
-Perform an archival run for the given channel in its entirety.
+Perform an archival run for the given channel in its entirety.  Multiple IDs may be provided.
 
 ```
     $ python -m discard --after <datetime> --before <datetime> guild <guild_id>
 ```
+
+Archive all messages accessible in a given Discord guild within the given time range.  Multiple IDs may be provided.
 
 The following command-line options are available:
 

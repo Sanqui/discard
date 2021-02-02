@@ -11,6 +11,7 @@ import string
 import gzip
 import asyncio
 from pathlib import Path
+from collections.abc import Iterable
 
 import discord
 
@@ -70,22 +71,24 @@ class DiscardClient(discord.Client):
                 print(f"Fetched profile: {profile}")
 
         elif self.discard.mode == 'channel':
-            channel = self.get_channel(self.discard.channel_id)
+            for channel_id in self.discard.channel_ids:
+                channel = self.get_channel(channel_id)
 
-            if channel is None:
-                raise NotFoundError(f"Channel not found: {self.discard.channel_id}")
+                if channel is None:
+                    raise NotFoundError(f"Channel not found: {channel_id}")
 
-            print(f"Got channel: {channel}")
-            await self.archive_channel(channel)
+                print(f"Got channel: {channel}")
+                await self.archive_channel(channel)
 
         elif self.discard.mode == 'guild':
-            guild = self.get_guild(self.discard.guild_id)
+            for guild_id in self.discard.guild_ids:
+                guild = self.get_guild(guild_id)
 
-            if guild is None:
-                raise NotFoundError(f"Guild not found: {self.discard.guild_id}")
+                if guild is None:
+                    raise NotFoundError(f"Guild not found: {guild_id}")
 
-            print(f"Got guild: {guild}")
-            await self.archive_guild(guild)
+                print(f"Got guild: {guild}")
+                await self.archive_guild(guild)
         else:
             raise ValueError(f"Unknown mode: {self.discard.mode}")
 
@@ -156,8 +159,12 @@ class Discard():
         self.token = token
         self.mode = mode
         self.command = command
-        self.channel_id = channel_id
-        self.guild_id = guild_id
+        self.channel_ids = channel_id
+        if not isinstance(self.channel_ids, Iterable):
+            self.channel_ids = [self.channel_ids]
+        self.guild_ids = guild_id
+        if not isinstance(self.guild_ids, Iterable):
+            self.guild_ids = [self.guild_ids]
         self.is_user_account = is_user_account
         self.no_scrub = no_scrub
         self.output_dir_root = output_dir

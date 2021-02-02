@@ -30,15 +30,15 @@ def profile(ctx):
     discard = Discard(mode="profile", **ctx.obj)
     discard.run()
 
-@cli.command(help="Archive a single channel.")
-@click.argument('channel_id', required=True, type=int)
+@cli.command(help="Archive one or multiple channels.")
+@click.argument('channel_id', required=True, nargs=-1, type=int)
 @click.pass_context
 def channel(ctx, channel_id):
     discard = Discard(mode="channel", channel_id=channel_id, **ctx.obj)
     discard.run()
 
-@cli.command(help="Archive a single guild.")
-@click.argument('guild_id', required=True, type=int)
+@cli.command(help="Archive one or multiple guilds.")
+@click.argument('guild_id', required=True, nargs=-1, type=int)
 @click.pass_context
 def guild(ctx, guild_id):
     discard = Discard(mode="guild", guild_id=guild_id, **ctx.obj)
