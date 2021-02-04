@@ -83,7 +83,7 @@ Typically the following requests are made:
 * `<guild_id>`/`<channel_id>`.jsonl
     * `GET api/v8/channels/<channel_id>/messages?limit=100` while in the desired range
     * TODO: when encountering an invite: `GET /api/v8/invites/<invite_id>`
-    * TODO: when encountering a reaction
+    * `GET api/v8/channels/<channel_id>/messages/<message_id>/reactions/<emoji>` when encountering a reaction
 
 ## Why not use [DiscordChatExporter](https://github.com/Tyrrrz/DiscordChatExporter)?
 

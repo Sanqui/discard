@@ -110,7 +110,11 @@ class DiscardClient(discord.Client):
                                                 oldest_first=True):
             if newest_message == None:
                 newest_message = message
-            # TODO capture reactions
+            
+            for reaction in message.reactions:
+                # Fetch the users who reacted
+                async for user in reaction.users():
+                    pass
 
             num_messages += 1
             

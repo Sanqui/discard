@@ -218,4 +218,58 @@ interactions:
       code: 200
       message: OK
     url: https://discord.com/api/v7/channels/805808821749415946/messages?limit=100&after=0
+- request:
+    body: null
+    headers:
+      Cookie:
+      - __cfduid=d4b9378d21f32885fdba50024d715d7e81612373843
+      User-Agent:
+      - DiscordBot (https://github.com/Rapptz/discord.py 1.6.0) Python/3.9 aiohttp/3.7.3
+      X-Ratelimit-Precision:
+      - millisecond
+    method: GET
+    uri: https://discord.com/api/v7/channels/805808489695150183/messages/805808779160846405/reactions/%F0%9F%91%8D?limit=1
+  response:
+    body:
+      string: '[{"id": "83101988983668736", "username": "Sanqui", "avatar": "5806dc8069de110e94876ea63e0a1456",
+        "discriminator": "3248", "public_flags": 0}]'
+    headers:
+      Alt-Svc:
+      - h3-27=":443"; ma=86400, h3-28=":443"; ma=86400, h3-29=":443"; ma=86400
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 61c7edce28bc4114-PRG
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 04 Feb 2021 22:46:39 GMT
+      Expect-CT:
+      - max-age=604800, report-uri="https://report-uri.cloudflare.com/cdn-cgi/beacon/expect-ct"
+      NEL:
+      - '{"max_age":604800,"report_to":"cf-nel"}'
+      Report-To:
+      - '{"endpoints":[{"url":"https:\/\/a.nel.cloudflare.com\/report?s=B9JVpaItnUGDk4N5EfM%2FPgwgqGFtnHz6BF7s6g29zAg65RRVeQg5R8isSCfoexilwzTFGzArfULNBVIGY8BL9AFRkdqKNqJqMy8jKQ%3D%3D"}],"max_age":604800,"group":"cf-nel"}'
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      Via:
+      - 1.1 google
+      X-Content-Type-Options:
+      - nosniff
+      cf-request-id:
+      - 0810d2f4da0000411457927000000001
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-envoy-upstream-service-time:
+      - '31'
+    status:
+      code: 200
+      message: OK
+    url: https://discord.com/api/v7/channels/805808489695150183/messages/805808779160846405/reactions/%F0%9F%91%8D?limit=1
 version: 1

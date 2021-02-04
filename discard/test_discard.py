@@ -160,11 +160,17 @@ def test_channel(tmp_path, monkeypatch):
         assert obj['channel']['name'] == TEST_CHANNEL.name
         assert obj['summary']['num_messages'] > 0
     
+    fetched_reactions = False
+
     with open(run_directory / Path(str(TEST_GUILD.id)) / Path(f"{TEST_CHANNEL.id}.jsonl")) as f:
         for line in f:
             if line.strip():
                 obj = json.loads(line)
                 assert obj['type'] in ['http', 'ws']
+                if obj['type'] == 'http' and '/reactions' in obj['request']['url']:
+                    fetched_reactions = True
+    
+    assert fetched_reactions
 
 @pytest.mark.asyncio
 @pytest.mark.vcr

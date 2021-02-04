@@ -149,4 +149,58 @@ interactions:
       code: 200
       message: OK
     url: https://discord.com/api/v7/channels/805808489695150183/messages?limit=100&after=0
+- request:
+    body: null
+    headers:
+      Cookie:
+      - __cfduid=d57cd196bfe4d95a6488722d658ec26c01612213622
+      User-Agent:
+      - DiscordBot (https://github.com/Rapptz/discord.py 1.6.0) Python/3.9 aiohttp/3.7.3
+      X-Ratelimit-Precision:
+      - millisecond
+    method: GET
+    uri: https://discord.com/api/v7/channels/805808489695150183/messages/805808779160846405/reactions/%F0%9F%91%8D?limit=1
+  response:
+    body:
+      string: '[{"id": "83101988983668736", "username": "Sanqui", "avatar": "5806dc8069de110e94876ea63e0a1456",
+        "discriminator": "3248", "public_flags": 0}]'
+    headers:
+      Alt-Svc:
+      - h3-27=":443"; ma=86400, h3-28=":443"; ma=86400, h3-29=":443"; ma=86400
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 61c7edccce7e27b8-PRG
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 04 Feb 2021 22:46:38 GMT
+      Expect-CT:
+      - max-age=604800, report-uri="https://report-uri.cloudflare.com/cdn-cgi/beacon/expect-ct"
+      NEL:
+      - '{"report_to":"cf-nel","max_age":604800}'
+      Report-To:
+      - '{"max_age":604800,"endpoints":[{"url":"https:\/\/a.nel.cloudflare.com\/report?s=YzQvklX84IioOiIZ7j09hHm60glciKLVlPQd2huntcS7CEU3I5jv%2BwEC9BNWCcOI%2Fg9VQeNAaSBL4acb0AZ0zI3HvPi%2FkNDwRq8c0Q%3D%3D"}],"group":"cf-nel"}'
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      Via:
+      - 1.1 google
+      X-Content-Type-Options:
+      - nosniff
+      cf-request-id:
+      - 0810d2f3f8000027b8a5175000000001
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-envoy-upstream-service-time:
+      - '26'
+    status:
+      code: 200
+      message: OK
+    url: https://discord.com/api/v7/channels/805808489695150183/messages/805808779160846405/reactions/%F0%9F%91%8D?limit=1
 version: 1
