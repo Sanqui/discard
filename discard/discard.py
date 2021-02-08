@@ -15,7 +15,7 @@ from collections.abc import Iterable
 
 import discord
 
-__version__ = "0.1.5"
+__version__ = "0.1.6"
 
 class NotFoundError(Exception):
     pass
@@ -116,6 +116,8 @@ class DiscardClient(discord.Client):
                 async for user in reaction.users():
                     pass
 
+
+
             num_messages += 1
             
         oldest_message = message
@@ -128,6 +130,9 @@ class DiscardClient(discord.Client):
         # XXX is it a good idea for userbots to do this?
         await self.fetch_guild(guild.id)
         await guild.fetch_channels()
+
+        await guild.fetch_roles()
+        await guild.fetch_emojis()
 
         num_channels = 0
         for channel in guild.text_channels:

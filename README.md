@@ -79,6 +79,8 @@ Typically the following requests are made:
 * `<guild_id>`/guild.jsonl
     * `GET /api/v7/guilds/<guild_id>`
     * `GET /api/v7/guilds/<guild_id>/channels`
+    * `GET /api/v7/guilds/<guild_id>/roles`
+    * `GET /api/v7/guilds/<guild_id>/emojis`
     * TODO: fetch webhooks if there is permission
 * `<guild_id>`/`<channel_id>`.jsonl
     * `GET api/v8/channels/<channel_id>/messages?limit=100` while in the desired range
