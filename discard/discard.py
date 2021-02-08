@@ -15,7 +15,7 @@ from collections.abc import Iterable
 
 import discord
 
-DISCARD_VERSION = "0.1.0"
+__version__ = "0.1.5"
 
 class NotFoundError(Exception):
     pass
@@ -252,7 +252,8 @@ class Discard():
         obj = {
             'client': {
                 'name': 'discard',
-                'version': DISCARD_VERSION
+                'version': __version__,
+                'discord.py_version': discord.__version__
             },
             'command': self.command,
             'settings': {

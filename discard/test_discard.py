@@ -91,6 +91,8 @@ def test_profile(tmp_path, monkeypatch):
     with open(run_directory / 'run.meta.json') as f:
         obj = json.load(f)
         assert obj['client']['name'] == 'discard'
+        assert 'version' in obj['client']
+        assert 'discord.py_version' in obj['client']
         assert obj['settings']['mode'] == 'profile'
         assert obj['settings']['token'] == None
         assert obj['run']['completed'] == True
