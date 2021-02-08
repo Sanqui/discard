@@ -24,9 +24,24 @@ TEST_USER = discord.User(state=None, data={
 # We cannot instantiate the Guild class directly because we have no state object,
 # but we barely need it for anything so let's get around that
 TEST_GUILD = discord.Guild.__new__(discord.Guild)
-TEST_GUILD.id = 716047609776832623
+TEST_GUILD.id = 805808489695150180
 TEST_GUILD.name = "Discard Test Server"
-TEST_GUILD._members = {}
+TEST_GUILD.owner_id = 0
+
+TEST_ROLE = discord.Role(state=None, guild=TEST_GUILD, data={
+    'id': 805808489695150180,
+    'name': "Test role",
+    'permissions': discord.Permissions.all().value
+})
+
+TEST_MEMBER = discord.Member.__new__(discord.Member)
+TEST_MEMBER._user = TEST_USER
+
+TEST_GUILD._members = {TEST_USER.id: TEST_MEMBER}
+
+TEST_MEMBER._roles = [TEST_ROLE]
+
+TEST_GUILD._roles = {TEST_ROLE.id: TEST_ROLE}
 
 TEST_CHANNEL = discord.TextChannel(state=None, guild=TEST_GUILD, data={
     'id': 805808489695150183,
@@ -41,6 +56,8 @@ TEST_CHANNEL2 = discord.TextChannel(state=None, guild=TEST_GUILD, data={
     'name': 'test',
     'parent_id': 0, 'position': 1
 })
+
+TEST_GUILD._channels = {TEST_CHANNEL.id: TEST_CHANNEL, TEST_CHANNEL2.id: TEST_CHANNEL2}
 
 
 @pytest.fixture(scope="module")
@@ -57,6 +74,7 @@ def monkeypatch_discard(monkeypatch, discard):
         await discard.client.on_ready()
     
     def get_channel(channel_id):
+        
         if channel_id == TEST_CHANNEL.id:
             TEST_CHANNEL._state = discard.client._connection
             return TEST_CHANNEL
@@ -65,9 +83,17 @@ def monkeypatch_discard(monkeypatch, discard):
             return TEST_CHANNEL2
         else:
             raise discord.NotFound()
+    
+    def get_guild(guild_id):
+        if guild_id == TEST_GUILD.id:
+            TEST_GUILD._state = discard.client._connection
+            return TEST_GUILD
+        else:
+            raise discord.NotFound()
         
     monkeypatch.setattr(discard.client, 'connect', connect)
     monkeypatch.setattr(discard.client, 'get_channel', get_channel)
+    monkeypatch.setattr(discard.client, 'get_guild', get_guild)
 
     return discard
 
@@ -237,3 +263,49 @@ def test_gzip(tmp_path, monkeypatch):
                 obj = json.loads(line)
                 assert obj['type'] in ['http', 'ws']
 
+
+
+@pytest.mark.asyncio
+@pytest.mark.vcr
+@pytest.mark.block_network
+def test_guild(tmp_path, monkeypatch):
+    '''Test archiving an entire guild.'''
+    discard = Discard(mode="guild", guild_id=TEST_GUILD.id, token=TEST_TOKEN, output_dir=tmp_path)
+    monkeypatch_discard(monkeypatch, discard)
+
+    discard.run()
+
+    run_directory = list(tmp_path.iterdir())[0]
+    
+    with open(run_directory / 'run.meta.json') as f:
+        obj = json.load(f)
+        assert obj['client']['name'] == 'discard'
+        assert obj['settings']['mode'] == 'channel'
+        assert obj['run']['completed'] == True
+        assert obj['run']['finished'] == True
+        assert obj['run']['errors'] == False
+        assert obj['run']['exception'] == None
+
+    with open(run_directory / 'run.jsonl') as f:
+        for line in f:
+            if line.strip():
+                obj = json.loads(line)
+                assert obj['type'] in ['http', 'ws']
+
+    with open(run_directory / Path(str(TEST_GUILD.id)) / Path(f"{TEST_CHANNEL.id}.meta.json")) as f:
+        obj = json.load(f)
+        assert obj['channel']['id'] == TEST_CHANNEL.id
+        assert obj['channel']['name'] == TEST_CHANNEL.name
+        assert obj['summary']['num_messages'] > 0
+    
+    fetched_reactions = False
+
+    with open(run_directory / Path(str(TEST_GUILD.id)) / Path(f"{TEST_CHANNEL.id}.jsonl")) as f:
+        for line in f:
+            if line.strip():
+                obj = json.loads(line)
+                assert obj['type'] in ['http', 'ws']
+                if obj['type'] == 'http' and '/reactions' in obj['request']['url']:
+                    fetched_reactions = True
+    
+    assert fetched_reactions
