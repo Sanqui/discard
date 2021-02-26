@@ -16,7 +16,7 @@ from collections.abc import Iterable
 import discord
 from tqdm import tqdm
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 PBAR_UPDATE_INTERVAL = 50
 

@@ -1,4 +1,6 @@
 import json
+import os
+import gzip
 
 import discord
 
@@ -18,7 +20,12 @@ def read_chat(path):
     state.max_messages = 1000
     state.clear()
 
-    for line in open(path + '.jsonl'):
+    if os.path.exists(path + '.jsonl.gz'):
+        file = gzip.open(path + '.jsonl.gz')
+    else:
+        file = open(path + '.jsonl')
+
+    for line in file:
         line = json.loads(line)
         if line['type'] != 'http':
             continue
