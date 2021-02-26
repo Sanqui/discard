@@ -23,6 +23,7 @@ pytest-recording==0.11.0
 PyYAML==5.4.1
 six==1.15.0
 toml==0.10.2
+tqdm==4.58.0
 typing-extensions==3.7.4.3
 vcrpy==4.1.1
 wrapt==1.12.1

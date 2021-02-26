@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="discord-discard",
-    version="0.1.6",
+    version="0.1.7",
     author="Sanqui",
     author_email="me@sanqui.net",
     description="Tool for medium-scale Discord server archival operations",
@@ -15,7 +15,8 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     install_requires=[
         'discord.py==1.6.0',
-        'click==7.1.2'
+        'click==7.1.2',
+        'tqdm==4.58.0'
     ],
     classifiers=[
         "Programming Language :: Python :: 3",

@@ -14,8 +14,11 @@ from pathlib import Path
 from collections.abc import Iterable
 
 import discord
+from tqdm import tqdm
 
-__version__ = "0.1.6"
+__version__ = "0.1.7"
+
+PBAR_UPDATE_INTERVAL = 50
 
 class NotFoundError(Exception):
     pass
@@ -77,7 +80,6 @@ class DiscardClient(discord.Client):
                 if channel is None:
                     raise NotFoundError(f"Channel not found: {channel_id}")
 
-                print(f"Got channel: {channel}")
                 await self.archive_channel(channel)
 
         elif self.discard.mode == 'guild':
@@ -87,7 +89,6 @@ class DiscardClient(discord.Client):
                 if guild is None:
                     raise NotFoundError(f"Guild not found: {guild_id}")
 
-                print(f"Got guild: {guild}")
                 await self.archive_guild(guild)
         else:
             raise ValueError(f"Unknown mode: {self.discard.mode}")
@@ -96,35 +97,54 @@ class DiscardClient(discord.Client):
         await self.close()
     
     async def archive_channel(self, channel: discord.abc.GuildChannel):
+        print(f"Processing channel: {channel}")
         self.discard.start_channel(channel)
 
         # XXX is it a good idea for userbots to do this?
         #await self.fetch_channel(channel.id)
 
         num_messages = 0
+        oldest_message = None
         newest_message = None
         message = None
+
+        pbar = None
+        pbar_previous_timestamp = None
         
         # before and after datetimes must be timezone-naive in UTC (why not timezone-aware UTC?)
         async for message in channel.history(after=self.discard.after, before=self.discard.before, limit=None,
                                                 oldest_first=True):
-            if newest_message == None:
-                newest_message = message
-            
+            if oldest_message is None:
+                oldest_message = message
+                expected_timedelta = (self.discard.before or datetime.datetime.now()) - oldest_message.created_at
+                pbar = tqdm(total=expected_timedelta.days, unit="days")
+                pbar.update(0)
+                pbar_previous_timestamp = oldest_message.created_at
+
             for reaction in message.reactions:
                 # Fetch the users who reacted
                 async for user in reaction.users():
                     pass
-
-
-
-            num_messages += 1
             
-        oldest_message = message
+            if num_messages % PBAR_UPDATE_INTERVAL == 0:
+                if pbar_previous_timestamp is not None:
+                    timedelta = message.created_at - pbar_previous_timestamp
+                    if timedelta.days:
+                        pbar.update(timedelta.days)
+            
+                pbar_previous_timestamp = message.created_at
+            
+            num_messages += 1
+           
+        pbar.update(((self.discard.before or datetime.datetime.now()) - pbar_previous_timestamp).days) 
+        pbar.close()
+
+        newest_message = message
 
         self.discard.end_channel(channel, num_messages, oldest_message, newest_message)
     
     async def archive_guild(self, guild: discord.Guild):
+        print(f"Processing guild: {guild}")
         self.discard.start_guild(guild)
 
         # XXX is it a good idea for userbots to do this?
@@ -134,13 +154,17 @@ class DiscardClient(discord.Client):
         await guild.fetch_roles()
         await guild.fetch_emojis()
 
-        num_channels = 0
+        channels = []
         for channel in guild.text_channels:
             if channel.permissions_for(guild.me).read_messages:
-                await self.archive_channel(channel)
-                num_channels += 1
+                channels.append(channel)
         
-        self.discard.end_guild(guild, num_channels)
+        print(f"{len(channels)} accessible channels...")
+
+        for channel in channels:
+            await self.archive_channel(channel)
+        
+        self.discard.end_guild(guild, len(channels))
             
 
     async def on_socket_raw_send(self, payload):
