@@ -87,6 +87,20 @@ Typically the following requests are made:
     * TODO: when encountering an invite: `GET /api/v8/invites/<invite_id>`
     * `GET api/v8/channels/<channel_id>/messages/<message_id>/reactions/<emoji>` when encountering a reaction
 
+## Reader
+
+Discard also comes with a rudimentary **reader** of its own chat logs.  You can use the reader to output plaintext, human readable logs from saved messages.  For instance:
+
+```
+$ python -m discard read example/20210201T174740_guild/805808489695150180/805808489695150183
+Channel general (id 805808489695150183)
+[2021-02-01 14:35:33.216000] <Sanqui#3248> Hello this is a message today, on the first of February.
+[2021-02-01 14:36:01.683000] Glad you're here, DiscardTest.
+[2021-02-01 14:36:19.281000] <Sanqui#3248> The previous message was an invite message.
+```
+
+Note that to get all relevant data related to the messages you should always parse the JSON directly.  Not all information can be expressed in plain text.
+
 ## Why not use [DiscordChatExporter](https://github.com/Tyrrrz/DiscordChatExporter)?
 
 [DiscordChatExporter](https://github.com/Tyrrrz/DiscordChatExporter) is an excellent tool for end users.  If you're somebody who just wants to make a few backups, please, **go ahead and use it**.  It has a straightforward GUI and multiple formatting options, particularly HTML, which allows for exporting chat logs that are easy to browse.  I've even made a brief contribution myself.

@@ -5,6 +5,7 @@ from pathlib import Path
 import click
 
 from discard import Discard
+from discard import reader
 
 @click.group()
 @click.option('-t', '--token', required=True, help='Bot or user token.',
@@ -43,6 +44,12 @@ def channel(ctx, channel_id):
 def guild(ctx, guild_id):
     discard = Discard(mode="guild", guild_id=guild_id, **ctx.obj)
     discard.run()
+
+@cli.command(help="Read a channel log.")
+@click.argument('path', required=True, type=click.Path(file_okay=False))
+@click.pass_context
+def read(ctx, path):
+    reader.read_chat(path)
 
 if __name__ == '__main__':
     cli()

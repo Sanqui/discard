@@ -5,7 +5,7 @@ from pathlib import Path
 import discord
 import pytest
 
-from discard import Discard
+from discard import Discard, reader
 
 # This is set to a valid token for recording cassettes but scrubbed in the repo.
 TEST_TOKEN = 'aa.bb.cc'
@@ -237,3 +237,10 @@ def test_gzip(tmp_path, monkeypatch):
                 obj = json.loads(line)
                 assert obj['type'] in ['http', 'ws']
 
+def test_reader(capsys):
+    reader.read_chat('example/20210201T174740_guild/805808489695150180/805808489695150183')
+
+    captured = capsys.readouterr()
+
+    assert 'general' in captured.out
+    assert 'message' in captured.out
