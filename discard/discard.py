@@ -16,9 +16,14 @@ from collections.abc import Iterable
 import discord
 from tqdm import tqdm
 
-__version__ = "0.2.2"
+__version__ = "0.2.3"
 
 PBAR_UPDATE_INTERVAL = 100
+
+# There's a few websocket events that we need to log (like GUILD_CREATE),
+# but also a few we didn't ask for we want to do without (pings, typing notifications, new messages),
+# at least until a realtime mode is introduced.  For this purpose we use a blacklist.
+WS_EVENT_BLACKLIST = [None, 'TYPING_START', 'MESSAGE_CREATE', 'MESSAGE_UPDATE', 'MESSAGE_REACTION_ADD']
 
 class NotFoundError(Exception):
     pass
@@ -419,6 +424,10 @@ class Discard():
         self.num_ws_packets += 1
 
     def log_ws_recv(self, data):
+        if 't' in data:
+            if data['t'] in WS_EVENT_BLACKLIST:
+                return
+        
         now = datetime.datetime.now()
         obj = {
             'type': 'ws',
