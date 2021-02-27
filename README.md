@@ -4,7 +4,7 @@ Discard is a Python tool for medium-scale Discord server archival operations.
 
 I don't know who needs to hear this, but I'll give a brief history lesson.  We used to own our data, now everything's in the cloud.  It used to be that chat clients had a valuable feature called *logging*.  Every message that you sent or received would be forever etched into a file on your disk, free to browse offline and search through in the future.  It's no longer like that.  We're supposed to appreciate the fulltext, fuzzy search we get from Discord, but something is lost.  The chat history is locked in this silo with no download option.  People can even delete their messages in front of your eyes—or while you're not looking!  This is not reasonable.  You deserve to trust your memory.
 
-At [Archive Team](https://archiveteam.org/), we're working tirelessly to preserve websites at risk.  With this project I'm turning my attention to archiving Discord servers.  This is important because **our history matters**.  Closed services like Discord and Telegram have gone on to displace traditional services like message boards and even what used to be homepages.  Want to download my fan game?  Why don't you join my Discord?  The invite link is public, and once you join, all history is there for you to read.  Yet you can't **discover** content from the server by search.  Private, or public?  Discord's status is *deep web*, as chats are unable to be indexed by conventional search engines and archival tools, even if invites are posted publicly.
+At [Archive Team](https://archiveteam.org/), we're working tirelessly to preserve websites at risk.  With this project I'm turning my attention to archiving Discord servers.  This is important because **our history matters**.  Closed services like Discord and Telegram have gone on to displace traditional services like message boards and even what used to be personal homepages.  Want to download my fan game?  Why don't you join my Discord?  The invite link is public, and once you join, all history is there for you to read.  Yet you can't **discover** content from the server by search.  Private, or public?  Discord's status is *deep web*, as chats are unable to be indexed by conventional search engines and archival tools, even if invites are posted publicly.
 
 I'm taking a stance: if a Discord server has a public invite, you have the right to archive it.  Let's make that happen.
 
@@ -82,6 +82,7 @@ Typically the following requests are made:
     * `GET /api/v7/guilds/<guild_id>/roles`
     * `GET /api/v7/guilds/<guild_id>/emojis`
     * TODO: fetch webhooks if there is permission
+    * TODO: fetch users
 * `<guild_id>`/`<channel_id>`.jsonl
     * `GET api/v8/channels/<channel_id>/messages?limit=100` while in the desired range
     * TODO: when encountering an invite: `GET /api/v8/invites/<invite_id>`
@@ -105,7 +106,7 @@ Note that to get all relevant data related to the messages you should always par
 
 [DiscordChatExporter](https://github.com/Tyrrrz/DiscordChatExporter) is an excellent tool for end users.  If you're somebody who just wants to make a few backups, please, **go ahead and use it**.  It has a straightforward GUI and multiple formatting options, particularly HTML, which allows for exporting chat logs that are easy to browse.  I've even made a brief contribution myself.
 
-What does Discard do differently?  Discard is a more advanced archival tool.  Its goal is to **record Discord API responses** with minimal data processing.  This allows for certainty that no data is missed, even for exotic types of content, or in case Discord changes its API (such as when replies were introduced!).  The idea is that as long as the data is complete, it can always be further derived by other tools.
+What does Discard do differently?  Discard is a more advanced archival tool.  Its goal is to **record Discord API responses** with minimal data processing.  This allows for certainty that no data is missed, even for exotic types of content, or in case Discord changes its API (such as when replies were introduced!).  The idea is that as long as the data capture is complete, it can always be further derived by other tools.
 
 In particular, I hope to address these issues with DiscordChatExporter which have been marked as out of scope:
 

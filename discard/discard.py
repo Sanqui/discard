@@ -16,9 +16,9 @@ from collections.abc import Iterable
 import discord
 from tqdm import tqdm
 
-__version__ = "0.2.1"
+__version__ = "0.2.2"
 
-PBAR_UPDATE_INTERVAL = 50
+PBAR_UPDATE_INTERVAL = 100
 
 class NotFoundError(Exception):
     pass
@@ -109,7 +109,6 @@ class DiscardClient(discord.Client):
         message = None
 
         pbar = None
-        pbar_previous_timestamp = None
         
         # before and after datetimes must be timezone-naive in UTC (why not timezone-aware UTC?)
         async for message in channel.history(after=self.discard.after, before=self.discard.before, limit=None,
@@ -117,7 +116,7 @@ class DiscardClient(discord.Client):
             if oldest_message is None:
                 oldest_message = message
                 expected_timedelta = (self.discard.before or datetime.datetime.now()) - oldest_message.created_at
-                pbar = tqdm(total=expected_timedelta.days, unit="days")
+                pbar = tqdm(total=expected_timedelta.days, unit="day", miniters=1)
                 pbar.update(0)
                 pbar_previous_timestamp = oldest_message.created_at
 
@@ -127,16 +126,14 @@ class DiscardClient(discord.Client):
                     pass
             
             if num_messages % PBAR_UPDATE_INTERVAL == 0:
-                if pbar_previous_timestamp is not None:
-                    timedelta = message.created_at - pbar_previous_timestamp
-                    if timedelta.days:
-                        pbar.update(timedelta.days)
-            
-                pbar_previous_timestamp = message.created_at
+                timedelta = message.created_at - oldest_message.created_at
+                diff = timedelta.days - pbar.n
+                if diff:
+                    pbar.update(diff)
             
             num_messages += 1
            
-        pbar.update(((self.discard.before or datetime.datetime.now()) - pbar_previous_timestamp).days) 
+        pbar.update(expected_timedelta.days - pbar.n) 
         pbar.close()
 
         newest_message = message
