@@ -24,7 +24,7 @@ TEST_USER = discord.User(state=None, data={
 # We cannot instantiate the Guild class directly because we have no state object,
 # but we barely need it for anything so let's get around that
 TEST_GUILD = discord.Guild.__new__(discord.Guild)
-TEST_GUILD.id = 716047609776832623
+TEST_GUILD.id = 805808489695150180
 TEST_GUILD.name = "Discard Test Server"
 TEST_GUILD._members = {}
 
@@ -244,3 +244,10 @@ def test_reader(capsys):
 
     assert 'general' in captured.out
     assert 'message' in captured.out
+
+def test_summary(capsys):
+    reader.summary('example/20210201T174740_guild')
+
+    captured = capsys.readouterr()
+
+    assert str(TEST_GUILD.id) in captured.out
