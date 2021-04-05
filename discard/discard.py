@@ -16,7 +16,7 @@ from collections.abc import Iterable
 import discord
 from tqdm import tqdm
 
-__version__ = "0.3.1"
+__version__ = "0.3.2"
 
 PBAR_UPDATE_INTERVAL = 100
 PBAR_MINIMUM_MESSAGES = 1000 # Minimum number of messages to begin showing a progress bar for

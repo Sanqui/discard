@@ -7,8 +7,12 @@ import click
 from discard import Discard
 from discard import reader
 
+def require_token(ctx):
+    if ctx.obj['token'] is None:
+        raise click.ClickException('Please pass a token using -t or the DISCORD_TOKEN enviromental variable')
+
 @click.group()
-@click.option('-t', '--token', required=True, help='Bot or user token.',
+@click.option('-t', '--token', help='Bot or user token.',
             envvar='DISCORD_TOKEN')
 @click.option('-U', '--is-user-account', default=False, is_flag=True, help='Log in as a user account.')
 @click.option('-o', '--output-dir', default=Path('out/'), help='Output directory, out/ by default.',
@@ -28,6 +32,7 @@ def cli(ctx, **kwargs):
 @cli.command(help="Only log in and fetch profile information.")
 @click.pass_context
 def profile(ctx):
+    require_token(ctx)
     discard = Discard(mode="profile", **ctx.obj)
     discard.run()
 
@@ -35,6 +40,7 @@ def profile(ctx):
 @click.argument('channel_id', required=True, nargs=-1, type=int)
 @click.pass_context
 def channel(ctx, channel_id):
+    require_token(ctx)
     discard = Discard(mode="channel", channel_id=channel_id, **ctx.obj)
     discard.run()
 
@@ -42,6 +48,7 @@ def channel(ctx, channel_id):
 @click.argument('guild_id', required=True, nargs=-1, type=int)
 @click.pass_context
 def guild(ctx, guild_id):
+    require_token(ctx)
     discard = Discard(mode="guild", guild_id=guild_id, **ctx.obj)
     discard.run()
 
@@ -50,6 +57,12 @@ def guild(ctx, guild_id):
 @click.pass_context
 def read(ctx, path):
     reader.read_chat(path)
+
+@cli.command(help="Output a summary and audit for a directory of runs.")
+@click.argument('path', required=True, type=click.Path(file_okay=False))
+@click.pass_context
+def summary(ctx, path):
+    reader.summary(path)
 
 if __name__ == '__main__':
     cli()

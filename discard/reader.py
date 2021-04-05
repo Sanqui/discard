@@ -1,6 +1,8 @@
 import json
 import os
 import gzip
+from collections import defaultdict
+from pathlib import Path
 
 import discord
 
@@ -52,3 +54,42 @@ def read_chat(path):
                     print(f"[{message.created_at}] <{message.author}> {message.content}")
                 else:
                     print(f"[{message.created_at}] {message.system_content}")
+
+class Summarize():
+    def __init__(self):
+        # TODO coverage
+        self.guilds = defaultdict(dict)
+    
+    def parse_directory(self, path):
+        directory = os.listdir(path)
+        if 'run.meta.json' in directory:
+            self.parse_run(path)
+        else:
+            for subdirectory in directory:
+                if not os.path.isfile(path / subdirectory):
+                    self.parse_directory(path / subdirectory)
+    
+    def parse_run(self, path):
+        meta = json.load(open(path / 'run.meta.json'))
+        if meta['settings']['mode'] != 'guild':
+            # TODO
+            return
+        for subdirectory in os.listdir(path):
+            if not os.path.isfile(path / subdirectory):
+                guild_meta = json.load(open(path / subdirectory / 'guild.meta.json'))
+                guild_id = guild_meta['guild']['id']
+                self.guilds[guild_id]['name'] = guild_meta['guild']['name']
+
+    def summary(self):
+        return {
+            'guilds': self.guilds
+        }
+
+def summary(path):
+    path = Path(path)
+
+    summarize = Summarize()
+    summarize.parse_directory(path)
+    summary = summarize.summary()
+    
+    print(json.dumps(summary))
