@@ -16,7 +16,7 @@ from collections.abc import Iterable
 import discord
 from tqdm import tqdm
 
-__version__ = "0.2.3"
+__version__ = "0.3.1"
 
 PBAR_UPDATE_INTERVAL = 100
 
@@ -138,8 +138,9 @@ class DiscardClient(discord.Client):
             
             num_messages += 1
            
-        pbar.update(expected_timedelta.days - pbar.n) 
-        pbar.close()
+        if pbar:
+            pbar.update(expected_timedelta.days - pbar.n) 
+            pbar.close()
 
         newest_message = message
 
@@ -204,6 +205,8 @@ class Discard():
         self.no_scrub = no_scrub
         self.output_dir_root = output_dir
         self.client = None
+        if (before and not isinstance(before, datetime.datetime)) or (after and not isinstance(after, datetime.datetime)):
+            raise TypeError("before and after must be datetime objects")
         self.before = before
         self.after = after
         self.gzip = gzip
@@ -226,6 +229,8 @@ class Discard():
         self.profile = None
 
         self.run_directory = self.datetime_start.strftime('%Y%m%dT%H%M%S_'+self.mode)
+        if not self.before and not self.after:
+            self.run_directory += '_full'
         self.output_directory = self.output_dir_root / Path(self.run_directory)
         if os.path.exists(self.output_directory):
             self.run_directory += "_" + self.ident[0:5]

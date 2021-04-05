@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="discord-discard",
-    version="0.3.0",
+    version="0.3.1",
     author="Sanqui",
     author_email="me@sanqui.net",
     description="Tool for medium-scale Discord server archival operations",
