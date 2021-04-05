@@ -19,6 +19,7 @@ from tqdm import tqdm
 __version__ = "0.3.1"
 
 PBAR_UPDATE_INTERVAL = 100
+PBAR_MINIMUM_MESSAGES = 1000 # Minimum number of messages to begin showing a progress bar for
 
 # There's a few websocket events that we need to log (like GUILD_CREATE),
 # but also a few we didn't ask for we want to do without (pings, typing notifications, new messages),
@@ -121,20 +122,20 @@ class DiscardClient(discord.Client):
             if oldest_message is None:
                 oldest_message = message
                 expected_timedelta = (self.discard.before or datetime.datetime.now()) - oldest_message.created_at
-                pbar = tqdm(total=expected_timedelta.days, unit="day", miniters=1)
-                pbar.update(0)
-                pbar_previous_timestamp = oldest_message.created_at
 
             for reaction in message.reactions:
                 # Fetch the users who reacted
                 async for user in reaction.users():
                     pass
             
-            if num_messages % PBAR_UPDATE_INTERVAL == 0:
+            if num_messages % PBAR_UPDATE_INTERVAL == 0 and num_messages > PBAR_MINIMUM_MESSAGES:
                 timedelta = message.created_at - oldest_message.created_at
-                diff = timedelta.days - pbar.n
-                if diff:
-                    pbar.update(diff)
+                if pbar is None:
+                    pbar = tqdm(total=expected_timedelta.days, initial=timedelta.days, unit="day", miniters=1)
+                else:
+                    diff = timedelta.days - pbar.n
+                    if diff:
+                        pbar.update(diff)
             
             num_messages += 1
            
