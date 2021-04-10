@@ -60,9 +60,10 @@ def read(ctx, path):
 
 @cli.command(help="Output a summary and audit for a directory of runs.")
 @click.argument('path', required=True, type=click.Path(file_okay=False))
+@click.option('--json', default=False, is_flag=True, help='Output machine readable summary.')
 @click.pass_context
-def summary(ctx, path):
-    reader.summary(path)
+def summary(ctx, path, json):
+    reader.summary(path, as_json=json)
 
 if __name__ == '__main__':
     cli()
