@@ -16,7 +16,7 @@ from collections.abc import Iterable
 import discord
 from tqdm import tqdm
 
-__version__ = "0.3.2"
+__version__ = "0.3.3"
 
 PBAR_UPDATE_INTERVAL = 100
 PBAR_MINIMUM_MESSAGES = 1000 # Minimum number of messages to begin showing a progress bar for
@@ -298,8 +298,8 @@ class Discard():
                 'token': self.token if self.no_scrub else None,
                 'is_user_account': self.is_user_account,
                 'output_dir': str(self.output_dir_root),
-                'after': self.before.isoformat() if self.before else None,
-                'before': self.after.isoformat() if self.after else None,
+                'after': self.after.isoformat() if self.after else None,
+                'before': self.before.isoformat() if self.before else None,
                 'no_scrub': self.no_scrub,
                 'gzip': self.gzip
             },
