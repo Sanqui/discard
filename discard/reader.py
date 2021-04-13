@@ -31,6 +31,7 @@ def read_chat(path):
     guild.id = 0
     guild._members = {}
     guild._roles = {}
+    guild.name = ''
 
     channel = discord.TextChannel(state=state, guild=guild, data={
         'id': channel_id,
